@@ -5,6 +5,7 @@ local widget = require( "widget" )
 local myData = require( "mydata" )
 local json = require( "json" )
 local utility = require( "utility" )
+local wx = require( "weather" )
 
 local locationText
 local temperatureText
@@ -115,7 +116,7 @@ local function onRowRender( event )
         rowConditions:setFillColor( 0.0 )
     end
 end
-
+--[[
 local function convertTemperature( baseValue, format )
     local temperature = baseValue
     if format == "fahrenheit" then
@@ -131,7 +132,7 @@ local function convertDistance( baseValue, format )
     end
     return distance
 end
-
+--]]
 local function displayCurrentConditions( )
     print("Lat, Lng", myData.latitude, myData.longitude)
     print("last refresh", myData.lastRefresh)
@@ -151,16 +152,16 @@ local function displayCurrentConditions( )
 
     local temperature = "??"
     if currently.temperature then
-        temperature = math.floor( convertTemperature( tonumber( currently.temperature ), myData.settings.tempUnits )  + 0.5 ) 
+        temperature = math.floor( wx.convertTemperature( tonumber( currently.temperature ), myData.settings.tempUnits )  + 0.5 ) 
     end
     local precipType = "??"
     local precipChance =  "??"
     if response.daily.data[1].precipProbability then
         precipChance = tostring( math.floor( tonumber( currently.precipProbability ) * 100 + 0.5 ) ) .. "%"
     end
-    local lowTemp = math.floor( convertTemperature( tonumber( response.daily.data[1].temperatureMin ), myData.settings.tempUnits ) + 0.5 )
-    local highTemp = math.floor( convertTemperature( tonumber( response.daily.data[1].temperatureMax ), myData.settings.tempUnits ) + 0.5 )
-    local windSpeed = math.floor( convertDistance( tonumber( currently.windSpeed ), myData.settings.distanceUnits ) + 0.5 )
+    local lowTemp = math.floor( wx.convertTemperature( tonumber( response.daily.data[1].temperatureMin ), myData.settings.tempUnits ) + 0.5 )
+    local highTemp = math.floor( wx.convertTemperature( tonumber( response.daily.data[1].temperatureMax ), myData.settings.tempUnits ) + 0.5 )
+    local windSpeed = math.floor( wx.convertDistance( tonumber( currently.windSpeed ), myData.settings.distanceUnits ) + 0.5 )
     local windDirection
     if currently.windBearing then
         windDirection = tonumber( currently.windBearing )
@@ -170,15 +171,15 @@ local function displayCurrentConditions( )
         pressure = math.floor( pressure * 0.0295301 * 100 ) / 100
     end
     local humdity = tonumber( currently.humidity * 100 )
-    local visibility = math.floor( convertDistance( tonumber( currently.visibility ), myData.settings.distanceUnits ) + 0.5 )
+    local visibility = math.floor( wx.convertDistance( tonumber( currently.visibility ), myData.settings.distanceUnits ) + 0.5 )
     local feelLike = temperature
     if currently.apparentTemperature then 
-        feelsLike = math.floor( convertTemperature( tonumber( currently.apparentTemperature ), myData.settings.tempUnits ) + 0.5 )
+        feelsLike = math.floor( wx.convertTemperature( tonumber( currently.apparentTemperature ), myData.settings.tempUnits ) + 0.5 )
     end
     local sunriseTime = response.daily.data[1].sunriseTime
     local sunsetTime = response.daily.data[1].sunsetTime
     local moonPhase = response.daily.data[1].moonPhase
-    local nearestStormDistance = math.floor( convertDistance( tonumber( currently.nearestStormDistance ), myData.settings.distanceUnits ) + 0.5 )
+    local nearestStormDistance = math.floor( wx.convertDistance( tonumber( currently.nearestStormDistance ), myData.settings.distanceUnits ) + 0.5 )
     local nearestStormBearing = currently.nearestStormBearing
     local icon = currently.icon
     local dewPoint = currently.dewPoint
@@ -216,8 +217,8 @@ local function displayCurrentConditions( )
     fLowTemp = lowTemp
     fHighTemp = highTemp
     if "celsius" == myData.settings.tempUnits then
-        fLowTemp = math.floor( convertTemperature( tonumber( response.daily.data[1].temperatureMin ), "fahrenheit" ) + 0.5 )
-        fHighTemp = math.floor( convertTemperature( tonumber( response.daily.data[1].temperatureMax ), "fahrenheit" ) + 0.5 )
+        fLowTemp = math.floor( wx.convertTemperature( tonumber( response.daily.data[1].temperatureMin ), "fahrenheit" ) + 0.5 )
+        fHighTemp = math.floor( wx.convertTemperature( tonumber( response.daily.data[1].temperatureMax ), "fahrenheit" ) + 0.5 )
     end
     highText.y = thermometer.y + 50 - fHighTemp
     highText.x = mercury.x + 55
@@ -254,13 +255,29 @@ local function displayCurrentConditions( )
 
     sunriseText.text = os.date( "%H:%M", sunriseTime )
     sunsetText.text = os.date( "%H:%M", sunsetTime )
-    moonText.text = moonPhase
+    -- moonText.text = moonPhase
     cloudCoverText.text = tostring( math.floor( cloudCover * 100 + 0.5 ) ) .. "%"
 
+    local moonImages = { 
+        "images/new_moon.png", 
+        "images/waxing_crescent.png", 
+        "images/first_quarter.png", 
+        "images/waxing_gibbous.png",
+        "images/full_moon.png",
+        "images/waning_gibbous.png",
+        "images/third_quarter.png",
+        "images/waning_crescent.png",
+        "images/new_moon.png"
+    }
+    local moonIdx = math.floor( ( moonPhase * 100  ) / 12.5 + 0.5 ) + 1
+    local moonImage = display.newImageRect( moonImages[ moonIdx ], 25, 25 )
+    moonImage.x = moonTextLabel.x + 25
+    moonImage.y = moonTextLabel.y + 50
+    scene.view:insert( moonImage )
 
     return true
 end
-
+--[[
 local function processCurrentConditionsRequest( event )
     print("processing forecast request")
     --print(json.prettify(event))
@@ -272,7 +289,7 @@ local function processCurrentConditionsRequest( event )
     return true
 end
 
-local function fetchWeather()
+local function fetchWeather( )
 
     myData.latitude = myData.settings.locations[1].latitude
     myData.longitude = myData.settings.locations[1].longitude
@@ -296,7 +313,7 @@ local function fetchWeather()
         displayCurrentConditions( )
     end
 end
-
+--]]
 -- ScrollView listener
 local function scrollListener( event )
 
@@ -313,7 +330,7 @@ local function scrollListener( event )
             -- refresh
             myData.lastRefresh = os.time()
             temperatureText.text = "??º"
-            fetchWeather()
+            wx.fetchWeather( displayCurrentConditions )
         elseif ( event.direction == "left" ) then print( "Reached left limit" )
         elseif ( event.direction == "right" ) then print( "Reached right limit" )
         end
@@ -506,7 +523,7 @@ function scene:show( event )
             end
         end
 
-        fetchWeather()
+        wx.fetchWeather( displayCurrentConditions )
     end
 end
 

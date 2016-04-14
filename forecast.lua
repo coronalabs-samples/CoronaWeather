@@ -5,24 +5,9 @@ local widget = require( "widget" )
 local json = require( "json" )
 local utility = require( "utility" )
 local myData = require( "mydata" )
+local wx = require( "weather" )
 
 local forecastTableView
-
-local function convertTemperature( baseValue, format )
-    local temperature = baseValue
-    if format == "fahrenheit" then
-        temperature = temperature * 9 / 5 + 32
-    end
-    return temperature
-end
-
-local function convertDistance( baseValue, format )
-    local distance = baseValue
-    if format == "miles" then
-        distance = distance * 0.621371
-    end
-    return distance
-end
 
 function string.upperCaseFirstLetter( self )
     print("stringUCFL", self)
@@ -129,10 +114,10 @@ local function displayForecast()
 
     for i = 1, 7 do
         forecast[i] = {}
-        forecast[i].high = math.floor( convertTemperature( tonumber( daily.data[i].temperatureMax ), myData.settings.tempUnits )  + 0.5 )
-        forecast[i].low = math.floor( convertTemperature( tonumber( daily.data[i].temperatureMin ), myData.settings.tempUnits )  + 0.5 )
-        forecast[i].fHigh = math.floor( convertTemperature( tonumber( daily.data[i].temperatureMax ), "fahrenheit" )  + 0.5 ) -- for graphing purposes
-        forecast[i].fLow = math.floor( convertTemperature( tonumber( daily.data[i].temperatureMin ), "fahrenheit" )  + 0.5 )  -- for graphing purposes
+        forecast[i].high = math.floor( wx.convertTemperature( tonumber( daily.data[i].temperatureMax ), myData.settings.tempUnits )  + 0.5 )
+        forecast[i].low = math.floor( wx.convertTemperature( tonumber( daily.data[i].temperatureMin ), myData.settings.tempUnits )  + 0.5 )
+        forecast[i].fHigh = math.floor( wx.convertTemperature( tonumber( daily.data[i].temperatureMax ), "fahrenheit" )  + 0.5 ) -- for graphing purposes
+        forecast[i].fLow = math.floor( wx.convertTemperature( tonumber( daily.data[i].temperatureMin ), "fahrenheit" )  + 0.5 )  -- for graphing purposes
         forecast[i].icon = daily.data[i].icon
         forecast[i].precipChance = math.floor( daily.data[i].precipProbability * 100 + 0.5 )
         if daily.data[i].precipType then
@@ -142,7 +127,7 @@ local function displayForecast()
         end
         forecast[i].time = daily.data[i].time
         forecast[i].summary = daily.data[i].summary
-        forecast[i].windSpeed = math.floor( convertDistance( tonumber( daily.data[i].windSpeed ), myData.settings.distanceUnits ) + 0.5 )
+        forecast[i].windSpeed = math.floor( wx.convertDistance( tonumber( daily.data[i].windSpeed ), myData.settings.distanceUnits ) + 0.5 )
         forecast[i].windBearing = tonumber( daily.data[i].windBearing )
         forecast[i].humidity = math.floor( tonumber( daily.data[i].humidity ) * 100 )
         forecastTableView:insertRow({
@@ -170,6 +155,11 @@ local function displayForecast()
     end
 
 end
+
+local function forecastListener( event )
+    return true
+end
+
 --
 -- Start the composer event handlers
 --
@@ -248,7 +238,8 @@ function scene:show( event )
     params = event.params
 
     if event.phase == "will" then
-        displayForecast()
+        myData.navBar:setLabel( myData.settings.locations[1].name )
+        wx.fetchWeather( displayForecast )
     end
 end
 
@@ -256,6 +247,7 @@ function scene:hide( event )
     local sceneGroup = self.view
     
     if event.phase == "will" then
+
     end
 
 end
