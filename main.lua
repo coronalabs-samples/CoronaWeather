@@ -4,10 +4,11 @@ local widgetExtras = require( "widget-extras" )
 local utility = require( "utility" )
 local myData = require( "mydata" )
 local device = require( "device" )
+local theme = require( "theme" )
 
 display.setStatusBar( display.HiddenStatusBar )
-display.setDefault( "background", 0.95, 0.95, 0.95  )
 
+Runtime:setCheckGlobals( true )
 math.randomseed( os.time() )
 
 myData.wuAPIkey = "63786a2636b67f31"
@@ -19,10 +20,6 @@ myData.bingMapKey = "AlNVpu8Z01qBfva8DhkrUg0WdxzdB3eeOdoO5TxHXRAmovpl5M_qQsda-zq
 myData.lastRefresh = 0 -- force a download the first time.
 myData.latitude = 35.7789
 myData.longitude = -78.8003
-myData.font = "HelveticaNeue-Thin"
-myData.fontBold = "HelveticaNeue"
-myData.textColor = { 0, 0, 0 }
-myData.backgroundColor = { 0.95, 0.95, 0.95 }
 myData.platform = "iOS"
 myData.gps = {}
 
@@ -32,19 +29,14 @@ elseif "device" == system.getInfo("environment") and "Android" == system.getInfo
     myData.platform = "Android"
 end
 
-local navBarBackgroundColor = { 1, 1, 1 }
-local navBarTextColor = { 0, 0, 0 }
+if "iOS" == myData.platform then
+    display.setStatusBar( display.DefaultStatusBar )
+end
 
 if "Android" == myData.platform then
     widget.setTheme( "widget_theme_android_holo_dark" )
-    display.setDefault( "background", 0.05, 0.05, 0.05 )
+    theme.setTheme( "dark" )
     myData.platform = "Android"
-    navBarBackgroundColor = { 0.2, 0.2, 0.2 }
-    navBarTextColor = { 1, 1, 1 }
-    myData.font = native.systemFont
-    myData.fontBold = native.systemFontBold
-    myData.textColor = { 1, 1, 1 }
-    myData.backgroundColor = { 0.05, 0.05, 0.05 }
 end
 --
 -- Load saved in settings
@@ -56,6 +48,7 @@ if myData.settings == nil then
 	myData.settings.musicOn = true
     myData.settings.isPaid = false
     myData.settings.showIcons = false
+    myData.settings.theme = "light"
     myData.settings.tempUnits = "fahrenheit" -- fahrenheit or celsius
     myData.settings.distanceUnits = "miles" -- miles or kilometers
     myData.settings.locations = { { name = "Cary, NC", latitude = 35.7789, longitude = -78.8003, postalCode = "27519", selected = true },
@@ -90,15 +83,19 @@ local leftButton = {
     onEvent = leftButtonEvent,
 }
 
+local includeStatusBar = false
+if "iOS" == myData.platform then
+    includeStatusBar = true
+end
 
 myData.navBar = widget.newNavigationBar({
     isTransluscent = false,
-    backgroundColor = navBarBackgroundColor,
+    backgroundColor = theme.navBarBackgroundColor,
     title = myData.currentLocation, 
-    titleColor = navBarTextColor,
-    font = myData.fontBold,
+    titleColor = theme.navBarTextColor,
+    font = theme.fontBold,
     height = 50,
-    includeStatusBar = false,
+    includeStatusBar = includeStatusBar,
     leftButton = leftButton
 })
 
@@ -135,7 +132,7 @@ end
 
 local tabButtons = {
     {
-        label = "Current Conditions",
+        label = "Current Weather",
         defaultFile = "images/weather_default.png",
         overFile = "images/weather_selected.png",
         labelColor = { 

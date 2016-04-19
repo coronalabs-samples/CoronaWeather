@@ -6,6 +6,7 @@ local myData = require( "mydata" )
 local json = require( "json" )
 local utility = require( "utility" )
 local wx = require( "weather" )
+local theme = require( "theme" )
 
 local locationText
 local temperatureText
@@ -18,29 +19,28 @@ local mercury
 local thermometer
 local thermometerOverlay
 local compassNeedle
-local visibilityLabel
 local visibilityText
-local pressureLabel
 local pressureText
-local humidityLabel
 local humidityText
-local feelsLikeLabel
+local feelsLike
 local feelsLikeText
-local sunriseTextLabel
 local sunriseText
-local sunsetTextLabel
 local sunsetText
 local moonTextLabel
 local moonText
-local cloudCoverTextLabel
 local cloudCoverText
-
-local hourlyScroll
+local dewPointText
+local windSpeedText
+local hourlyScrollView
 local hourlyDateText = {}
 local hourlyTempText = {}
 local hourlyPercentText = {}
 local hourlyImage = {}
 local icons = {}
+
+local tempPoints = {}
+local pathPoints = {}
+local curve
 
 local forecastTableView
 local forecastScrollView
@@ -70,7 +70,6 @@ local function reverseGeocode( latitude, longitude )
     print( URL )
     network.request( URL, "GET", reverseGeocodeResponse)
 end
-
     
 local function onRowRender( event )
 
@@ -149,6 +148,9 @@ local function displayCurrentConditions( )
     --
     local currently = response.currently
     print( json.prettify( response ) )
+    local minutely = response.minutely
+    local daily = response.daily
+    local hourly = response.hourly
 
     local temperature = "??"
     if currently.temperature then
@@ -159,12 +161,14 @@ local function displayCurrentConditions( )
     if response.daily.data[1].precipProbability then
         precipChance = tostring( math.floor( tonumber( currently.precipProbability ) * 100 + 0.5 ) ) .. "%"
     end
-    local lowTemp = math.floor( wx.convertTemperature( tonumber( response.daily.data[1].temperatureMin ), myData.settings.tempUnits ) + 0.5 )
-    local highTemp = math.floor( wx.convertTemperature( tonumber( response.daily.data[1].temperatureMax ), myData.settings.tempUnits ) + 0.5 )
+    local lowTemp = math.floor( wx.convertTemperature( tonumber( daily.data[1].temperatureMin ), myData.settings.tempUnits ) + 0.5 )
+    local highTemp = math.floor( wx.convertTemperature( tonumber( daily.data[1].temperatureMax ), myData.settings.tempUnits ) + 0.5 )
     local windSpeed = math.floor( wx.convertDistance( tonumber( currently.windSpeed ), myData.settings.distanceUnits ) + 0.5 )
+    local bearingIndex = nil
     local windDirection
     if currently.windBearing then
         windDirection = tonumber( currently.windBearing )
+        bearingIndex= math.floor( ( currently.windBearing % 360 ) / 22.5 ) + 1
     end  
     local pressure = tonumber( currently.pressure)
     if myData.settings.pressureUnits == "inches" then
@@ -182,62 +186,26 @@ local function displayCurrentConditions( )
     local nearestStormDistance = math.floor( wx.convertDistance( tonumber( currently.nearestStormDistance ), myData.settings.distanceUnits ) + 0.5 )
     local nearestStormBearing = currently.nearestStormBearing
     local icon = currently.icon
-    local dewPoint = currently.dewPoint
+    local dewPoint = math.floor( wx.convertTemperature( tonumber( currently.dewPoint ), myData.settings.tempUnits ) + 0.5 )
     local cloudCover = currently.cloudCover
     local ozone = currently.ozone
 
     highText.text = "High " .. tostring( highTemp ) .. "º"
     lowText.text = "Low " .. tostring( lowTemp ) .. "º"
 
-    mercury.height = highTemp + 12-- lowTemp
-    mercury.y = thermometer.y + 52
-
-    local topColor = { 0.3916, 0.6172, 1.0 }
-    if tonumber( currently.temperature ) > 10 then
-        topColor = { 0, 1, 0 }
-    elseif tonumber( currently.temperature ) > 25 then
-        topColor = { 1, 1, 0 }
-    elseif tonumber( currently.temperature ) > 30 then
-        topColor = { 1, 0.5, 0 }
-    else
-        topColor = { 1, 0, 0 }
-    end
-
-    local paint = {
-        type = "gradient",
-        color1 = { 0.3916, 0.6172, 1.0 },
-        color2 = topColor,
-        direction = "up"
-    }
-    mercury.fill = paint
-
-    --
-    -- I need the temperature here in Fahrenheit to scale properly to the thermometer
-    --
-    fLowTemp = lowTemp
-    fHighTemp = highTemp
-    if "celsius" == myData.settings.tempUnits then
-        fLowTemp = math.floor( wx.convertTemperature( tonumber( response.daily.data[1].temperatureMin ), "fahrenheit" ) + 0.5 )
-        fHighTemp = math.floor( wx.convertTemperature( tonumber( response.daily.data[1].temperatureMax ), "fahrenheit" ) + 0.5 )
-    end
-    highText.y = thermometer.y + 50 - fHighTemp
-    highText.x = mercury.x + 55
-    lowText.y = thermometer.y + 50  - fLowTemp
-    lowText.x = mercury.x + 55
-    if ( lowText.y - highText.y ) < 20 then
-        lowText.y = lowText.y + 10
-        highText.y = highText.y - 10
-    end
-
     temperatureText.text = tostring( temperature ) .. "º"
-    compassNeedle.rotation = windDirection
+    --compassNeedle.rotation = windDirection
     local windSpeedPrefix = "kph"
     local distancePrefix = "km"
     if myData.settings.distanceUnits == "miles" then
         windSpeedPrefix = "mph"
         distancePrefix = "mi"
     end
-    windSpeedText.text = windSpeed .. " " .. windSpeedPrefix
+    if bearingIndex then
+        windSpeedText.text = wx.bearingLabels[ bearingIndex ] .. " " .. windSpeed .. " " .. windSpeedPrefix
+    else
+        windSpeedText.text = windSpeed .. " " .. windSpeedPrefix
+    end
     local pressurePrefix = " mb"
     if myData.settings.pressureUnits == "inches" then
         pressurePrefix = " in. Hg."
@@ -247,12 +215,21 @@ local function displayCurrentConditions( )
     visibilityText.text = visibility .. distancePrefix
     feelsLikeText.text = feelsLike .. "º"
 
-    local weatherIcon = display.newImage( "images/" .. currently.icon .. ".png")
-    weatherIcon.x = mercury.x
-    weatherIcon.y = compassNeedle.y
+    local weatherIcon = display.newImageRect( "images/" .. currently.icon .. ".png", 128, 128 )
+    weatherIcon.x = display.contentWidth - 74  
+    weatherIcon.y = temperatureText.y + 10
     forecastScrollView:insert( weatherIcon )
-    weatherIcon:scale(0.3, 0.3)
 
+    --
+    -- We can't postiion this text until we have the Icon loaded. We don't create the icon until we're displaying the weather.
+    --
+    weatherText.text = hourly.data[1].summary
+    weatherText.x = weatherIcon.x
+    weatherText.y = weatherIcon.y + 70
+    weatherText.anchorX = 0.5
+
+    dewPointText.text = dewPoint
+    
     sunriseText.text = os.date( "%H:%M", sunriseTime )
     sunsetText.text = os.date( "%H:%M", sunsetTime )
     -- moonText.text = moonPhase
@@ -272,48 +249,112 @@ local function displayCurrentConditions( )
     local moonIdx = math.floor( ( moonPhase * 100  ) / 12.5 + 0.5 ) + 1
     local moonImage = display.newImageRect( moonImages[ moonIdx ], 25, 25 )
     moonImage.x = moonTextLabel.x + 25
-    moonImage.y = moonTextLabel.y + 50
-    scene.view:insert( moonImage )
+    moonImage.y = moonTextLabel.y 
+    forecastScrollView:insert( moonImage )
 
-    return true
-end
---[[
-local function processCurrentConditionsRequest( event )
-    print("processing forecast request")
-    --print(json.prettify(event))
-    if not event.isError then
-        myData.currentWeatherData = json.decode(event.response)
-        myData.lastRefresh = os.time()
-        displayCurrentConditions()
-    end
-    return true
-end
+    local xWidth = display.actualContentWidth / 9
 
-local function fetchWeather( )
+    local hourlyScrollView = widget.newScrollView
+    {
+        top = highText.x + 100,
+        left = 0,
+        width = display.actualContentWidth,
+        height = 180,
+        scrollWidth = #hourly.data * xWidth,
+        scrollHeight = 150,
+        backgroundColor = myData.backgroundColor,
+        isBounceEnabled = false,
+        verticalScrollDisabled = true
+    }
+    forecastScrollView:insert( hourlyScrollView )
 
-    myData.latitude = myData.settings.locations[1].latitude
-    myData.longitude = myData.settings.locations[1].longitude
-    for i = 1, #myData.settings.locations do
-        if myData.settings.locations[i].selected then
-            myData.latitude = myData.settings.locations[i].latitude
-            myData.longitude = myData.settings.locations[i].longitude
-            break
+--
+-- Because we won't have our graph of the temperatures until we create the polygon later and it's 
+-- more efficient to go ahead and create our other display objects now, let's create a group to hold them
+-- that we can insert later to assure proper layering
+--
+
+    local hourlyIconGroup = display.newGroup()
+
+--    for i = 1, #hourly.data do
+--        tempPoints[ #tempPoints + 1 ] = { x = xWidth * ( i - 1 ), y = 35 - hourly.data[ i ].temperature }
+--    end
+    local maxPeriodTemperature = -999999
+    for i = 1, #hourly.data do
+        local periodTemperature = math.floor( wx.convertTemperature( tonumber( hourly.data[ i ].temperature ), "fahrenheit" ) + 0.5 )
+        tempPoints[ #tempPoints + 1 ] = xWidth * ( i - 1 )
+        tempPoints[ #tempPoints + 1 ] = 0 - periodTemperature 
+        if periodTemperature > maxPeriodTemperature then
+            maxPeriodTemperature = periodTemperature
+        end
+        if i < #hourly.data then -- skip the last temp since there isn't a polygon slice for it
+            local hourlyTempText = display.newText( tostring( math.floor( wx.convertTemperature( tonumber( hourly.data[ i ].temperature ), myData.settings.tempUnits ) + 0.5 ) ) .. "º", xWidth * ( i - 1 ) + 3, 120 - periodTemperature - 20, theme.font, 12 )
+            hourlyTempText.anchorX = 0
+            hourlyTempText.anchorY = 1
+            hourlyTempText:setFillColor( unpack( theme.textColor ) )
+            hourlyScrollView:insert( hourlyTempText )
+            local icon = display.newImageRect( "images/" .. hourly.data[i].icon .. ".png", 24, 24 )
+            icon.x = xWidth * ( i - 1 ) + 15
+            icon.y = 120
+            hourlyIconGroup:insert( icon )
+            local precipChanceText = display.newText( tonumber( math.floor( hourly.data[i].precipProbability * 100 + 0.5) ) .. "%", icon.x, icon.y + 20, theme.font, 12 )
+            precipChanceText:setFillColor( 0 )
+            hourlyIconGroup:insert( precipChanceText )
+            if (i - 1) % 2 == 0 then
+                local forecastTime = os.date( "%I%p", hourly.data[i].time )
+                --
+                -- remove the leading 0
+                --
+                if string.sub(forecastTime, 1, 1) == "0" then
+                    forecastTime = string.sub( forecastTime, 2 )
+                end
+                local forecastTimeText = display.newText( forecastTime, precipChanceText.x, precipChanceText.y + 30, theme.font, 12 )
+                forecastTimeText:setFillColor( unpack( theme.textColor ) )
+                hourlyIconGroup:insert( forecastTimeText )
+            end
         end
     end
+    tempPoints[ #tempPoints + 1 ] = tempPoints[ #tempPoints - 1 ]
+    tempPoints[ #tempPoints + 1 ] = 50 
+    tempPoints[ #tempPoints + 1 ] = 0
+    tempPoints[ #tempPoints + 1 ] = 50 
 
-    local forecastIOURL = "https://api.forecast.io/forecast/" .. myData.forecastIOkey .. "/" .. tostring(myData.latitude) .. "," .. tostring(myData.longitude)
-    forecastIOURL = forecastIOURL .. "?units=si"
-    print( forecastIOURL )
-    local now = os.time()
-    print("cache test", now, myData.lastRefresh )
-    if now > myData.lastRefresh + (15 * 60) then
-        network.request( forecastIOURL, "GET", processCurrentConditionsRequest )
+    local topColor = { 0.3916, 0.6172, 1.0 }
+    if tonumber( maxPeriodTemperature ) > 75 then
+        topColor = { 0, 1, 0 }
+    elseif tonumber( maxPeriodTemperature ) > 85 then
+        topColor = { 1, 1, 0 }
+    elseif tonumber( maxPeriodTemperature ) > 95 then
+        topColor = { 1, 0.5, 0 }
     else
-        print("showing cached data")
-        displayCurrentConditions( )
+        topColor = { 1, 0, 0 }
     end
-end
+
+    local paint = { 0.6, 0.8, 1.0 }
+--[[
+        type = "gradient",
+        color1 = { 0.3916, 0.6172, 1.0 },
+        color2 = topColor,
+        direction = "up"
+    }
 --]]
+
+    local poly = display.newPolygon( 0, 20, tempPoints )
+    --local poly = display.newLine( tempPoints[1].x, tempPoints[1].y, tempPoints[2].x, tempPoints[2].y )
+    --for i = 3, #tempPoints do
+    --    poly:append( tempPoints[i].x, tempPoints[i].y)
+    --end
+    hourlyScrollView:insert(poly)
+    poly.anchorY = 0
+    poly.anchorX = 0
+    poly.strokeWidth = 2
+    poly:setStrokeColor( 0.8, 0.8, 0.8 )
+    poly.fill = paint
+
+    hourlyScrollView:insert( hourlyIconGroup )
+    return true
+end
+
 -- ScrollView listener
 local function scrollListener( event )
 
@@ -344,17 +385,7 @@ end
 function scene:create( event )
     local sceneGroup = self.view
 
-    params = event.params
-
     local scrollViewHeight = display.actualContentHeight - 100
-    local textColor = 0.0
-    local bgColor = { 0.95 }
-    if "Android" == myData.platform then
-        scrollViewHeight = display.actualContentHeight - 50
-        textColor = 1.0
-        bgColor = { 0.05 }
-    end
-    print(myData.platform, bgColor[1])
     -- Create the widget
     forecastScrollView = widget.newScrollView
     {
@@ -364,7 +395,7 @@ function scene:create( event )
         height = scrollViewHeight,
         scrollWidth = display.contentWidth,
         scrollHeight = 800,
-        backgroundColor = bgColor,
+        backgroundColor = theme.backgroundColor,
         listener = scrollListener
     }
     sceneGroup:insert( forecastScrollView )
@@ -376,28 +407,29 @@ function scene:create( event )
 
     myData.navBar:setLabel( myData.currentLocation )
 
-    weatherText = display.newText("", display.contentCenterX, 75, display.contentWidth - 20, 0, myData.font, 18 )
-    weatherText:setFillColor( textColor )
-    forecastScrollView:insert( weatherText )
-
-    temperatureText = display.newText("" .. "º", display.contentWidth * 0.33, 80, myData.font, 140 )
+    temperatureText = display.newText("" .. "º", display.contentWidth * 0.33, 70, theme.font, 100 )
     temperatureText:setFillColor( 0.33, 0.66, 0.99 )
     forecastScrollView:insert( temperatureText )
+
+
+    weatherText = display.newText("", display.contentCenterX, display.contentWidth * 0.667, theme.font, 18 )
+    weatherText:setFillColor( theme.textColor )
+    forecastScrollView:insert( weatherText )
 
     --rainChanceText = display.newText("Rain chance " .. "%", display.contentCenterX, 230, "HelveticaNeue-Thin", 20 )
     --rainChanceText:setFillColor( 0.4, 0.4, 0.4 )
     --sceneGroup:insert( rainChanceText )
 
-    highText = display.newText("", 10, 245, myData.font, 18)
-    highText:setFillColor( textColor )
+    highText = display.newText("", temperatureText.x - 40, temperatureText.y + 80, theme.font, 18)
+    highText:setFillColor( theme.textColor )
     forecastScrollView:insert( highText )
     highText.anchorX = 0.5
 
-    lowText = display.newText("", display.contentCenterX , 245, myData.font, 18)
-    lowText:setFillColor( textColor )
+    lowText = display.newText("", temperatureText.x + 40, temperatureText.y + 80, theme.font, 18)
+    lowText:setFillColor( theme.textColor )
     forecastScrollView:insert( lowText )
     lowText.anchorX = 0.5
-
+--[[
     local thermometerFilename = "images/thermometer.png"
     if "Android" == myData.platform then
         thermometerFilename = "images/thermometer_dark.png"
@@ -417,99 +449,114 @@ function scene:create( event )
     forecastScrollView:insert( thermometerOverlay )
     thermometerOverlay.x = thermometer.x
     thermometerOverlay.y = thermometer.y
-
+--]]
+--[[
     local compassBackground = display.newImageRect( "images/compass.png", 128, 128 )
     compassBackground.x = temperatureText.x - 15
-    compassBackground.y = temperatureText.y + 145
+    compassBackground.y = temperatureText.y + 165
     forecastScrollView:insert( compassBackground )
+    compassBackground.isVisible = false
 
     compassNeedle = display.newImageRect( "images/compass_pointer.png", 128, 128 )
     compassNeedle.x = compassBackground.x
     compassNeedle.y = compassBackground.y
     forecastScrollView:insert( compassNeedle )
+    compassNeedle.isVisible = false
+--]]
 
-    windSpeedText = display.newText( "", compassBackground.x, compassBackground.y + 80, myData.font, 18 )
-    windSpeedText:setFillColor( textColor )
+    local windSpeedLabel = display.newText( "Winds: ", 60, highText.y + 220, theme.font, 14 )
+    windSpeedLabel:setFillColor( theme.textColor )
+    windSpeedLabel.anchorX = 1
+    forecastScrollView:insert( windSpeedLabel )
+    windSpeedText = display.newText( "", 70, windSpeedLabel.y , theme.fontBold, 14 )
+    windSpeedText:setFillColor( theme.textColor )
+    windSpeedText.anchorX = 0
     forecastScrollView:insert( windSpeedText )
 
-    visibilityLabel = display.newText( "Visibility:", 80, windSpeedText.y + 50, myData.font, 14 )
-    visibilityLabel:setFillColor( textColor )
+    local visibilityLabel = display.newText( "Visibility:", 60, windSpeedText.y + 24, theme.font, 14 )
+    visibilityLabel:setFillColor( theme.textColor )
     visibilityLabel.anchorX = 1
     forecastScrollView:insert( visibilityLabel )
-    visibilityText = display.newText( "", 90, visibilityLabel.y, myData.fontBold, 14 )
-    visibilityText:setFillColor( textColor )
+    visibilityText = display.newText( "", 70, visibilityLabel.y, theme.fontBold, 14 )
+    visibilityText:setFillColor( theme.textColor )
     visibilityText.anchorX = 0
     forecastScrollView:insert( visibilityText )
 
-    pressureLabel = display.newText( "Pressure:", 80, visibilityLabel.y + 24, myData.font, 14 )
-    pressureLabel:setFillColor( textColor )
+    local pressureLabel = display.newText( "Pressure:", 60, visibilityLabel.y + 24, theme.font, 14 )
+    pressureLabel:setFillColor( theme.textColor )
     pressureLabel.anchorX = 1
     forecastScrollView:insert( pressureLabel )
-    pressureText = display.newText( "", 90, pressureLabel.y, myData.fontBold, 14 )
-    pressureText:setFillColor( textColor )
+    pressureText = display.newText( "", 70, pressureLabel.y, theme.fontBold, 14 )
+    pressureText:setFillColor( theme.textColor )
     pressureText.anchorX = 0
     forecastScrollView:insert( pressureText )
 
-    humidityLabel = display.newText( "Humidity:", 80, pressureLabel.y + 24, myData.font, 14 )
-    humidityLabel:setFillColor( textColor )
+    local humidityLabel = display.newText( "Humidity:", 60, pressureLabel.y + 24, theme.font, 14 )
+    humidityLabel:setFillColor( theme.textColor )
     humidityLabel.anchorX = 1
     forecastScrollView:insert( humidityLabel )
-    humidityText = display.newText( "", 90, humidityLabel.y, myData.fontBold, 14 )
-    humidityText:setFillColor( textColor )
+    humidityText = display.newText( "", 70, humidityLabel.y, theme.fontBold, 14 )
+    humidityText:setFillColor( theme.textColor )
     humidityText.anchorX = 0
     forecastScrollView:insert( humidityText )
 
-    feelsLikeLabel = display.newText( "Feels like:", 80, humidityLabel.y + 24, myData.font, 14 )
-    feelsLikeLabel:setFillColor( textColor )
+    local feelsLikeLabel = display.newText( "Feels like:", 60, humidityLabel.y + 24, theme.font, 14 )
+    feelsLikeLabel:setFillColor( theme.textColor )
     feelsLikeLabel.anchorX = 1
     forecastScrollView:insert( feelsLikeLabel )
-    feelsLikeText = display.newText( "", 90, feelsLikeLabel.y, myData.fontBold, 14 )
-    feelsLikeText:setFillColor( textColor )
+    feelsLikeText = display.newText( "", 70, feelsLikeLabel.y, theme.fontBold, 14 )
+    feelsLikeText:setFillColor( theme.textColor )
     feelsLikeText.anchorX = 0
     forecastScrollView:insert( feelsLikeText )
 
-    sunriseTextLabel = display.newText( "Sunrise", display.contentWidth - 90, visibilityText.y, myData.font, 14 )
-    sunriseTextLabel:setFillColor( unpack( myData.textColor ) )
+    local sunriseTextLabel = display.newText( "Sunrise", display.contentWidth - 70, windSpeedLabel.y, theme.font, 14 )
+    sunriseTextLabel:setFillColor( theme.textColor )
     sunriseTextLabel.anchorX = 1
     forecastScrollView:insert( sunriseTextLabel )
-    sunriseText = display.newText( "", display.contentWidth - 80, visibilityText.y, myData.fontBold, 14 )
-    sunriseText:setFillColor( unpack( myData.textColor ) )
+    sunriseText = display.newText( "", display.contentWidth - 60, sunriseTextLabel.y, theme.fontBold, 14 )
+    sunriseText:setFillColor( unpack( theme.textColor ) )
     sunriseText.anchorX = 0
     forecastScrollView:insert( sunriseText )
 
-    sunsetTextLabel = display.newText( "Sunset", display.contentWidth - 90, pressureText.y, myData.font, 14 )
-    sunsetTextLabel:setFillColor( unpack( myData.textColor ) )
+    local sunsetTextLabel = display.newText( "Sunset", display.contentWidth - 70, visibilityText.y, theme.font, 14 )
+    sunsetTextLabel:setFillColor( unpack( theme.textColor ) )
     sunsetTextLabel.anchorX = 1
     forecastScrollView:insert( sunsetTextLabel )
-    sunsetText = display.newText( "", display.contentWidth - 80, pressureText.y, myData.fontBold, 14 )
-    sunsetText:setFillColor( unpack( myData.textColor ) )
+    sunsetText = display.newText( "", display.contentWidth - 60, sunsetTextLabel.y, theme.fontBold, 14 )
+    sunsetText:setFillColor( unpack( theme.textColor ) )
     sunsetText.anchorX = 0
     forecastScrollView:insert( sunsetText )
 
-    moonTextLabel = display.newText( "Moon phase", display.contentWidth - 90, humidityText.y, myData.font, 14 )
-    moonTextLabel:setFillColor( unpack( myData.textColor ) )
+    moonTextLabel = display.newText( "Moon phase", display.contentWidth - 70, pressureLabel.y, theme.font, 14 )
+    moonTextLabel:setFillColor( unpack( theme.textColor ) )
     moonTextLabel.anchorX = 1
     forecastScrollView:insert( moonTextLabel )
-    moonText = display.newText( "", display.contentWidth - 80, humidityText.y, myData.fontBold, 14 )
-    moonText:setFillColor( unpack( myData.textColor ) )
+    moonText = display.newText( "", display.contentWidth - 60, moonTextLabel.y, theme.fontBold, 14 )
+    moonText:setFillColor( unpack( theme.textColor ) )
     moonText.anchorX = 0
     forecastScrollView:insert( moonText )
 
-    cloudCoverTextLabel = display.newText( "Cloud Cover", display.contentWidth - 90, feelsLikeText.y, myData.font, 14 )
-    cloudCoverTextLabel:setFillColor( unpack( myData.textColor ) )
+    local cloudCoverTextLabel = display.newText( "Cloud Cover", display.contentWidth - 70, humidityText.y, theme.font, 14 )
+    cloudCoverTextLabel:setFillColor( unpack( theme.textColor ) )
     cloudCoverTextLabel.anchorX = 1
     forecastScrollView:insert( cloudCoverTextLabel )
-    cloudCoverText = display.newText( "", display.contentWidth - 80, feelsLikeText.y, myData.fontBold, 14 )
-    cloudCoverText:setFillColor( unpack( myData.textColor ) )
+    cloudCoverText = display.newText( "", display.contentWidth - 60, cloudCoverTextLabel.y, theme.fontBold, 14 )
+    cloudCoverText:setFillColor( unpack( theme.textColor ) )
     cloudCoverText.anchorX = 0
     forecastScrollView:insert( cloudCoverText )
 
+    local dewPointTextLabel = display.newText( "DewPoint", display.contentWidth - 70, feelsLikeLabel.y, theme.font, 14 )
+    dewPointTextLabel:setFillColor( unpack( theme.textColor ) )
+    dewPointTextLabel.anchorX = 1
+    forecastScrollView:insert( dewPointTextLabel )
+    dewPointText = display.newText( "", display.contentWidth - 60, dewPointTextLabel.y, theme.fontBold, 14 )
+    dewPointText:setFillColor( unpack( theme.textColor ) )
+    dewPointText.anchorX = 0
+    forecastScrollView:insert( dewPointText )
 end
 
 function scene:show( event )
     local sceneGroup = self.view
-
-    params = event.params
 
     local latitude = myData.latitude
     local longitude = myData.longitude

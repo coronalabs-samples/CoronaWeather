@@ -9,6 +9,9 @@ local json = require( "json" )
 local myData = require( "mydata" )
 local M = {}
 
+M.bearingLabels = { "N", "NNE", "NE", "ENE", "E", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW", "N" }
+
+
 function M.convertTemperature( baseValue, format )
     local temperature = baseValue
     if format == "fahrenheit" then

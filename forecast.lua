@@ -6,6 +6,7 @@ local json = require( "json" )
 local utility = require( "utility" )
 local myData = require( "mydata" )
 local wx = require( "weather" )
+local theme = require( "theme" )
 
 local forecastTableView
 
@@ -30,22 +31,22 @@ local function onForecastRowRender( event )
     local monthName = os.date( "%b", params.time )
     local monthDay = os.date( "%d", params.time )
 
-    local weekDayText = display.newText( weekDay, 30, 5, myData.fontBold, 16 )
+    local weekDayText = display.newText( weekDay, 30, 5, theme.fontBold, 16 )
     row:insert( weekDayText ) 
-    weekDayText:setFillColor( unpack( myData.textColor ) )
+    weekDayText:setFillColor( unpack( theme.textColor ) )
     weekDayText.anchorY = 0
 
-    local dateText = display.newText( monthName .. " " .. monthDay, 30, 25, myData.font, 12 )
+    local dateText = display.newText( monthName .. " " .. monthDay, 30, 25, theme.font, 12 )
     dateText.anchorY = 0
-    dateText:setFillColor( unpack( myData.textColor ) )
+    dateText:setFillColor( unpack( theme.textColor ) )
     row:insert( dateText )
 
-    local highText = display.newText( params.high .. "º", 75, 5, myData.font, 16 )
-    highText:setFillColor( unpack( myData.textColor ) )
+    local highText = display.newText( params.high .. "º", 75, 5, theme.font, 16 )
+    highText:setFillColor( unpack( theme.textColor ) )
     highText.anchorY = 0
     row:insert( highText )
 
-    local lowText = display.newText( params.low .. "º", 75, 25, myData.font, 14 )
+    local lowText = display.newText( params.low .. "º", 75, 25, theme.font, 14 )
     lowText:setFillColor( 0.5 )
     lowText.anchorY = 0
     row:insert( lowText )
@@ -56,19 +57,19 @@ local function onForecastRowRender( event )
     row:insert( icon )
 
 --[[
-    local summaryText = display.newText( params.summary, 135, 25, myData.font, 14 )
-    summaryText:setFillColor( unpack( myData.textColor ) )
+    local summaryText = display.newText( params.summary, 135, 25, theme.font, 14 )
+    summaryText:setFillColor( unpack( theme.textColor ) )
     summaryText.anchorX = 0
     row:insert( summaryText )
 --]]
 
-    local precipChanceText = display.newText( params.precipChance .."% " .. string.upperCaseFirstLetter( params.precipType ), 150, 25, myData.font, 14 )
-    precipChanceText:setFillColor( unpack( myData.textColor ) )
+    local precipChanceText = display.newText( params.precipChance .."% " .. string.upperCaseFirstLetter( params.precipType ), 150, 25, theme.font, 14 )
+    precipChanceText:setFillColor( unpack( theme.textColor ) )
     precipChanceText.anchorX = 0
     row:insert( precipChanceText )
 
-    local humidityText = display.newText( params.humidity .. "%", 240, 25, myData.font, 14)
-    humidityText:setFillColor( unpack( myData.textColor ) )
+    local humidityText = display.newText( params.humidity .. "%", 240, 25, theme.font, 14)
+    humidityText:setFillColor( unpack( theme.textColor ) )
     row:insert( humidityText )
 
     local windSpeedPrefix = "mph"
@@ -76,17 +77,16 @@ local function onForecastRowRender( event )
         windSpeedPrefix = "kph"
     end
 
-    local windSpeedText = display.newText( params.windSpeed .. " " .. windSpeedPrefix, 300, 5, myData.font, 14 )
-    windSpeedText:setFillColor( unpack( myData.textColor ) )
+    local windSpeedText = display.newText( params.windSpeed .. " " .. windSpeedPrefix, 300, 5, theme.font, 14 )
+    windSpeedText:setFillColor( unpack( theme.textColor ) )
     windSpeedText.anchorY = 0
     row:insert( windSpeedText )
 
-    local bearingLabels = { "N", "NNE", "NE", "ENE", "E", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW", "N" }
     local bearingIndex = math.floor( ( params.windBearing % 360 ) / 22.5 ) + 1
-    print(params.windBearing, bearingIndex, bearingLabels[ bearingIndex ])
+    print(params.windBearing, bearingIndex, wx.bearingLabels[ bearingIndex ])
 
-    local windBearingText = display.newText( bearingLabels[ bearingIndex ], 300, 25, myData.font, 14)
-    windBearingText:setFillColor( unpack( myData.textColor ) )
+    local windBearingText = display.newText( wx.bearingLabels[ bearingIndex ], 300, 25, theme.font, 14)
+    windBearingText:setFillColor( unpack( theme.textColor ) )
     windBearingText.anchorY = 0
     row:insert( windBearingText )
 end
@@ -166,47 +166,45 @@ end
 function scene:create( event )
     local sceneGroup = self.view
 
-    params = event.params
-        
     --
     -- setup a page background, really not that important though composer
     -- crashes out if there isn't a display object in the view.
     --
-    myData.navBar:setLabel( "Forecast for " ) --.. myData.currentLocation )
+
     local background = display.newRect( display.contentCenterX, display.contentCenterY, display.contentWidth, display.contentHeight )
-    background:setFillColor( unpack( myData.backgroundColor ) )
+    background:setFillColor( unpack( theme.backgroundColor ) )
     sceneGroup:insert( background )
 
-    local forecastHeaderBackground = display.newRect( display.contentCenterX, 95, display.contentWidth - 40, 50)
+    local forecastHeaderBackground = display.newRect( display.contentCenterX, 100, display.contentWidth - 40, 50)
     forecastHeaderBackground:setFillColor( 1 )
-    if "Android" == myData.platform then
+    if myData.settings.theme == "dark" then
         forecastHeaderBackground:setFillColor( 0.2 )
     end
     sceneGroup:insert( forecastHeaderBackground )
 
-    local dayText = display.newText( "Date", 50, forecastHeaderBackground.y, myData.font, 14 )
-    dayText:setFillColor( unpack( myData.textColor ) )
+    local dayText = display.newText( "Date", 50, forecastHeaderBackground.y, theme.font, 14 )
+    dayText:setFillColor( unpack( theme.textColor ) )
     sceneGroup:insert( dayText )
 
-    local hiloText = display.newText( "Hi/Lo", 95, forecastHeaderBackground.y, myData.font, 14 )
-    hiloText:setFillColor( unpack( myData.textColor ) )
+    local hiloText = display.newText( "Hi/Lo", 95, forecastHeaderBackground.y, theme.font, 14 )
+    hiloText:setFillColor( unpack( theme.textColor ) )
     sceneGroup:insert( hiloText )
 
-    local skyText = display.newText( "Skies", 140, forecastHeaderBackground.y, myData.font, 14 )
-    skyText:setFillColor( unpack( myData.textColor ) )
+    local skyText = display.newText( "Skies", 140, forecastHeaderBackground.y, theme.font, 14 )
+    skyText:setFillColor( unpack( theme.textColor ) )
     sceneGroup:insert( skyText )
 
-    local precipText = display.newText( "Precip", 190, forecastHeaderBackground.y, myData.font, 14 )
-    precipText:setFillColor( unpack( myData.textColor ) )
+    local precipText = display.newText( "Precip", 190, forecastHeaderBackground.y, theme.font, 14 )
+    precipText:setFillColor( unpack( theme.textColor ) )
     sceneGroup:insert( precipText )
 
-    local humidityText = display.newText( "Humidity", 260, forecastHeaderBackground.y, myData.font, 14 )
-    humidityText:setFillColor( unpack( myData.textColor ) )
+    local humidityText = display.newText( "Humidity", 260, forecastHeaderBackground.y, theme.font, 14 )
+    humidityText:setFillColor( unpack( theme.textColor ) )
     sceneGroup:insert( humidityText )
 
     if display.contentWidth > 320 then
-        local windText = display.newText( "Wind", 320, forecastHeaderBackground.y, myData.font, 14 )
-        windText:setFillColor( unpack( myData.textColor ) )
+        local windText = display.newText( "Wind", 320, forecastHeaderBackground.y, theme.font, 14 )
+        windText:setFillColor( unpack( theme.textColor ) )
         sceneGroup:insert( windText )
     end
 
@@ -221,12 +219,12 @@ function scene:create( event )
 
     forecastTableView = widget.newTableView({
         left = 20,
-        top = 125,
+        top = 130,
         height = tableViewHeight,
         width = display.contentWidth - 40,
         onRowRender = onForecastRowRender,
         onRowTouch = onForecastRowTouch,
-        backgroundColor = myData.backgroundColor,
+        backgroundColor = theme.backgroundColor,
         listener = forecastListener
     })
     sceneGroup:insert( forecastTableView )
@@ -234,8 +232,6 @@ end
 
 function scene:show( event )
     local sceneGroup = self.view
-
-    params = event.params
 
     if event.phase == "will" then
         myData.navBar:setLabel( myData.settings.locations[1].name )

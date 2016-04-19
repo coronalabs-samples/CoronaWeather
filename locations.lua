@@ -5,6 +5,7 @@ local widget = require( "widget" )
 local json = require( "json" )
 local myData = require( "mydata" )
 local utility = require( "utility" )
+local theme = require( "theme" )
 
 local locationEntryField
 local searchTableView = nil
@@ -29,7 +30,7 @@ local function reloadData()
     local rowHeight = 40
     local rowColor = { default={ 1, 1, 1 }, over={ 1, 0.5, 0, 0.2 } }
     local lineColor = { 0.95, 0.95, 0.95 }
-    if "Android" == myData.platform then
+    if "dark" == myData.settings.theme then
     	rowColor = { default={ 0.2, 0.2, 0.2 }, over={ 0.3, 0.3, 0.3 } }
     	lineColor = { 0, 0, 0 }
     end
@@ -87,7 +88,7 @@ local function onSearchRowRender( event )
     local rowWidth = row.contentWidth
 
     local rowTitle = display.newText( row, params.name, 20, rowHeight * 0.5, myData.font, 16 )
-    rowTitle:setFillColor( unpack( myData.textColor ) )
+    rowTitle:setFillColor( unpack( theme.textColor ) )
     rowTitle.anchorX = 0
 end
 
@@ -240,7 +241,7 @@ local function onLocationRowRender( event )
     local rowWidth = row.contentWidth
 
     local rowTitle = display.newText( row, params.name, 20, rowHeight * 0.5, myData.font, 16 )
-    rowTitle:setFillColor( unpack( myData.textColor ) )
+    rowTitle:setFillColor( unpack( theme.textColor ) )
     rowTitle.anchorX = 0
     if params.selected then
 		local checkMark = display.newImageRect( row, "images/checkmark.png", 40, 40 )
@@ -262,28 +263,29 @@ local function onLocationRowRender( event )
     row:insert( deleteButton )
 end
 
+local function locationListener( event )
+	-- stub out for now
+end
+
 --
 -- Start the composer event handlers
 --
 function scene:create( event )
 	local sceneGroup = self.view
-
-	params = event.params
-		
 	--
 	-- setup a page background, really not that important though composer
 	-- crashes out if there isn't a display object in the view.
 	--
 	myData.navBar:setLabel( "Locations" )
 	local background = display.newRect( display.contentCenterX, display.contentCenterY, display.contentWidth, display.contentHeight )
-	background:setFillColor( unpack( myData.backgroundColor ) )
+	background:setFillColor( unpack( theme.backgroundColor ) )
 	sceneGroup:insert( background )
 
-	local locationLabel = display.newText("Enter location", display.contentCenterX, 70, myData.fontBold, 18 )
-	locationLabel:setFillColor( unpack( myData.textColor ) )
+	local locationLabel = display.newText("Enter location", display.contentCenterX, 90, myData.fontBold, 18 )
+	locationLabel:setFillColor( unpack( theme.textColor ) )
 	sceneGroup:insert( locationLabel)
 
-	local locationTableViewHeight = display.contentHeight - 190
+	local locationTableViewHeight = display.actualContentHeight - 210
 	if "Android" == myData.platform then
 		-- adjust for to tabBar at the bottom on Android
 		locationTableViewHeight = locationTableViewHeight + 50 
@@ -312,7 +314,7 @@ function scene:show( event )
 	else
 		local fieldWidth = display.contentWidth - 40
 
-		locationEntryField = native.newTextField( 20, 100, fieldWidth, 30 )
+		locationEntryField = native.newTextField( 20, 120, fieldWidth, 30 )
 		locationEntryField:addEventListener( "userInput", fieldHandler( function() return locationEntryField end ) ) 
 		sceneGroup:insert( locationEntryField)
 		locationEntryField.anchorX = 0

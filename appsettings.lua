@@ -5,11 +5,16 @@ local widget = require( "widget" )
 local json = require( "json" )
 local myData = require( "mydata" )
 local utility = require( "utility" )
+local theme = require( "theme" )
 
 local radioButton1
 local radioButton2
 local radioButton3
 local radioButton4
+local radioButton5
+local radioButton6
+local radioButton7
+local radioButton8
 
 local function gotoBing( event )
 	system.openURL( "https://www.bing.com" )
@@ -18,6 +23,16 @@ end
 
 local function gotoForecastIO( event )
 	system.openURL( "https://forecast.io/" )
+	return true
+end
+
+local function gotoMerlin( event )
+	system.openURL( "http://merlinthered.deviantart.com/" )
+	return true
+end
+
+local function gotoD3stroy( event )
+	system.openURL( "http://d3stroy.deviantart.com/" )
 	return true
 end
 
@@ -38,6 +53,12 @@ local function onRadioButtonPress( event )
     	myData.settings.pressureUnits = "inches"
     elseif switch.id == "millibars" then
     	myData.settings.pressureUnits = "millibars"
+    elseif switch.id == "theme_light" then
+    	theme.setTheme( "light")
+    	myData.settings.theme = "light"
+    elseif switch.id == "theme_dark" then
+    	theme.setTheme( "dark" )
+    	myData.settings.theme = "dark"
     end
     utility.saveTable( myData.settings, "settings.json" )
 end
@@ -61,20 +82,37 @@ end
 function scene:create( event )
 	local sceneGroup = self.view
 
-	utility.print_r(myData.textColor)
 	--
 	-- setup a page background, really not that important though composer
 	-- crashes out if there isn't a display object in the view.
 	--
 	myData.navBar:setLabel( "Settings" )
 
-	local tempratureLabel = display.newText( "Temperature Settings", display.contentCenterX, 100, myData.fontBold)
-	tempratureLabel:setFillColor( unpack( myData.textColor ) )
-	sceneGroup:insert( tempratureLabel )
+	local scrollViewHeight = display.actualContentHeight - 100
+
+    if "Android" == myData.platform then
+        scrollViewHeight = display.actualContentHeight - 50
+    end
+    -- Create the widget
+    local scrollView = widget.newScrollView
+    {
+        top = 70,
+        left = 0,
+        width = display.actualContentWidth,
+        height = scrollViewHeight,
+        scrollWidth = display.contentWidth,
+        scrollHeight = 800,
+        backgroundColor = theme.backgroundColor,
+    }
+    sceneGroup:insert( scrollView )
+
+	local tempratureLabel = display.newText( "Temperature Settings", display.contentCenterX, 10, theme.fontBold)
+	tempratureLabel:setFillColor( unpack( theme.textColor ) )
+	scrollView:insert( tempratureLabel )
 
 	-- Create a group for the radio button set
 	local tempRadioGroup = display.newGroup()
-	sceneGroup:insert( tempRadioGroup )
+	scrollView:insert( tempRadioGroup )
 
 	-- Create two associated radio buttons (inserted into the same display group)
 	radioButton1 = widget.newSwitch
@@ -87,10 +125,10 @@ function scene:create( event )
 	}
 	tempRadioGroup:insert( radioButton1 )
 
-	local fahrenheitText = display.newText( "Fahrenheit", 60, radioButton1.y, myData.font, 18 )
+	local fahrenheitText = display.newText( "Fahrenheit", 60, radioButton1.y, theme.font, 18 )
 	fahrenheitText.anchorX = 0
-	fahrenheitText:setFillColor( unpack( myData.textColor ) )
-	sceneGroup:insert( fahrenheitText )
+	fahrenheitText:setFillColor( unpack( theme.textColor ) )
+	scrollView:insert( fahrenheitText )
 
 	radioButton2 = widget.newSwitch
 	{
@@ -102,17 +140,17 @@ function scene:create( event )
 	}
 	tempRadioGroup:insert( radioButton2 )
 
-	local celsiusText = display.newText( "Celsius", 60, radioButton2.y, myData.font, 18 )
+	local celsiusText = display.newText( "Celsius", 60, radioButton2.y, theme.font, 18 )
 	celsiusText.anchorX = 0
-	celsiusText:setFillColor( unpack( myData.textColor ) )
-	sceneGroup:insert( celsiusText )
+	celsiusText:setFillColor( unpack( theme.textColor ) )
+	scrollView:insert( celsiusText )
 
-	local distanceLabel = display.newText( "Distance Settings", display.contentCenterX, radioButton2.y + 45, myData.fontBold)
-	distanceLabel:setFillColor( unpack( myData.textColor ) )
-	sceneGroup:insert( distanceLabel )
+	local distanceLabel = display.newText( "Distance Settings", display.contentCenterX, radioButton2.y + 45, theme.fontBold)
+	distanceLabel:setFillColor( unpack( theme.textColor ) )
+	scrollView:insert( distanceLabel )
 
 	local unitsRadioGroup = display.newGroup()
-	sceneGroup:insert( unitsRadioGroup )
+	scrollView:insert( unitsRadioGroup )
 
 	radioButton3 = widget.newSwitch
 	{
@@ -124,10 +162,10 @@ function scene:create( event )
 	}
 	unitsRadioGroup:insert( radioButton3 )
 
-	local milesText = display.newText( "Miles", 60, radioButton3.y, myData.font, 18 )
+	local milesText = display.newText( "Miles", 60, radioButton3.y, theme.font, 18 )
 	milesText.anchorX = 0
-	milesText:setFillColor( unpack( myData.textColor ) )
-	sceneGroup:insert( milesText )
+	milesText:setFillColor( unpack( theme.textColor ) )
+	scrollView:insert( milesText )
 
 	radioButton4 = widget.newSwitch
 	{
@@ -139,17 +177,17 @@ function scene:create( event )
 	}
 	unitsRadioGroup:insert( radioButton4 )
 
-	local kiloText = display.newText( "Kilometers", 60, radioButton4.y, myData.font, 18 )
+	local kiloText = display.newText( "Kilometers", 60, radioButton4.y, theme.font, 18 )
 	kiloText.anchorX = 0
-	kiloText:setFillColor( unpack( myData.textColor ) )
-	sceneGroup:insert( kiloText )
+	kiloText:setFillColor( unpack( theme.textColor ) )
+	scrollView:insert( kiloText )
 
-	local pressureLabel = display.newText( "Pressure Settings", display.contentCenterX, radioButton4.y + 45, myData.fontBold)
-	pressureLabel:setFillColor( unpack( myData.textColor ) )
-	sceneGroup:insert( pressureLabel )
+	local pressureLabel = display.newText( "Pressure Settings", display.contentCenterX, radioButton4.y + 45, theme.fontBold)
+	pressureLabel:setFillColor( unpack( theme.textColor ) )
+	scrollView:insert( pressureLabel )
 
 	local pressureRadioGroup = display.newGroup()
-	sceneGroup:insert( pressureRadioGroup )
+	scrollView:insert( pressureRadioGroup )
 
 	radioButton5 = widget.newSwitch
 	{
@@ -161,10 +199,10 @@ function scene:create( event )
 	}
 	pressureRadioGroup:insert( radioButton5 )
 
-	local inchesText = display.newText( "Inches of Mercury", 60, radioButton5.y, myData.font, 18 )
+	local inchesText = display.newText( "Inches of Mercury", 60, radioButton5.y, theme.font, 18 )
 	inchesText.anchorX = 0
-	inchesText:setFillColor( unpack( myData.textColor ) )
-	sceneGroup:insert( inchesText )
+	inchesText:setFillColor( unpack( theme.textColor ) )
+	scrollView:insert( inchesText )
 
 	radioButton6 = widget.newSwitch
 	{
@@ -176,21 +214,70 @@ function scene:create( event )
 	}
 	pressureRadioGroup:insert( radioButton6 )
 
-	local millibarText = display.newText( "Millibars", 60, radioButton6.y, myData.font, 18 )
+	local millibarText = display.newText( "Millibars", 60, radioButton6.y, theme.font, 18 )
 	millibarText.anchorX = 0
-	millibarText:setFillColor( unpack( myData.textColor ) )
-	sceneGroup:insert( millibarText )
+	millibarText:setFillColor( unpack( theme.textColor ) )
+	scrollView:insert( millibarText )
 
-	local forecastIoText = display.newText("Weather data powered by Forecast", display.contentCenterX, display.contentHeight - 100, myData.font, 16)
-	sceneGroup:insert(forecastIoText)
-	forecastIoText:setFillColor( unpack( myData.textColor ) )
+	local themeLabel = display.newText( "Theme", display.contentCenterX, radioButton6.y + 45, theme.fontBold)
+	themeLabel:setFillColor( unpack( theme.textColor ) )
+	scrollView:insert( themeLabel )
+
+	local themeRadioGroup = display.newGroup()
+	scrollView:insert( themeRadioGroup )
+
+	radioButton7 = widget.newSwitch
+	{
+		left = 20,
+		top = themeLabel.y + 30,
+		style = "radio",
+		id = "theme_light",
+		onPress = onRadioButtonPress
+	}
+	themeRadioGroup:insert( radioButton7 )
+
+	local lightText = display.newText( "Light", 60, radioButton7.y, theme.font, 18 )
+	lightText.anchorX = 0
+	lightText:setFillColor( unpack( theme.textColor ) )
+	scrollView:insert( lightText )
+
+	radioButton8 = widget.newSwitch
+	{
+		left = 20,
+		top = radioButton7.y + 30,
+		style = "radio",
+		id = "theme_dark",
+		onPress = onRadioButtonPress
+	}
+	themeRadioGroup:insert( radioButton8 )
+
+	local darkText = display.newText( "Dark", 60, radioButton8.y, theme.font, 18 )
+	darkText.anchorX = 0
+	darkText:setFillColor( unpack( theme.textColor ) )
+	scrollView:insert( darkText )
+	local forecastIoText = display.newText("Weather data powered by Forecast", 10, darkText.y + 60, theme.font, 16)
+	scrollView:insert(forecastIoText)
+	forecastIoText:setFillColor( unpack( theme.textColor ) )
+	forecastIoText.anchorX = 0
 	forecastIoText:addEventListener( "tap", gotoForecastIO )
 
-	local bingText = display.newText("Geocoding powered by bing!", display.contentCenterX, display.contentHeight - 80, myData.font, 16)
-	sceneGroup:insert( bingText )
-	bingText:setFillColor( unpack( myData.textColor ) )
+	local bingText = display.newText("Geocoding powered by bing!", 10, forecastIoText.y + 20, theme.font, 16)
+	scrollView:insert( bingText )
+	bingText:setFillColor( unpack( theme.textColor ) )
+	bingText.anchorX = 0
 	bingText:addEventListener( "tap", gotoBing )
 
+	local credits1 = display.newText("Some artwork courtesy MerlinTheRed (http://merlinthered.deviantart.com/)", 10, bingText.y + 20, theme.font, 10)
+	scrollView:insert( credits1 )
+	credits1.anchorX = 0
+	credits1:setFillColor( unpack( theme.textColor ) )
+	credits1:addEventListener( "tap", gotoMerlin )
+
+	local credits2 = display.newText("Some artwork courtesy d3stroy (http://d3stroy.deviantart.com/)", 10, credits1.y + 20, theme.font, 10)
+	scrollView:insert( credits2 )
+	credits2.anchorX = 0
+	credits2:setFillColor( unpack( theme.textColor ) )
+	credits2:addEventListener( "tap", gotoD3stroy )
 end
 
 function scene:show( event )
@@ -211,6 +298,11 @@ function scene:show( event )
 			radioButton5:setState( { isOn = true } )
 		else
 			radioButton6:setState( { isOn = true } )
+		end
+		if myData.settings.theme == "light" then
+			radioButton7:setState( { isOn = true } )
+		else
+			radioButton8:setState( { isOn = true } )
 		end
 	end
 end
