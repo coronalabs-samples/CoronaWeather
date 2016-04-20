@@ -7,8 +7,17 @@ local utility = require( "utility" )
 local myData = require( "mydata" )
 local wx = require( "weather" )
 local theme = require( "theme" )
+local UI = require( "ui" )
 
+local sceneBackground
 local forecastTableView
+local forecastHeaderBackground
+local dayText
+local hiloText
+local skyText
+local precipText
+local humidityText
+
 
 function string.upperCaseFirstLetter( self )
     print("stringUCFL", self)
@@ -30,6 +39,12 @@ local function onForecastRowRender( event )
     local weekDay = os.date( "%a", params.time )
     local monthName = os.date( "%b", params.time )
     local monthDay = os.date( "%d", params.time )
+
+    local rowBackground = display.newRect(0, 0, rowWidth, rowHeight)
+    rowBackground:setFillColor( unpack( theme.rowBackgroundColor ) )
+    rowBackground.anchorX = 0
+    rowBackground.anchorY = 0
+    row:insert( rowBackground )
 
     local weekDayText = display.newText( weekDay, 30, 5, theme.fontBold, 16 )
     row:insert( weekDayText ) 
@@ -171,39 +186,29 @@ function scene:create( event )
     -- crashes out if there isn't a display object in the view.
     --
 
-    local background = display.newRect( display.contentCenterX, display.contentCenterY, display.contentWidth, display.contentHeight )
-    background:setFillColor( unpack( theme.backgroundColor ) )
-    sceneGroup:insert( background )
+    sceneBackground = display.newRect( display.contentCenterX, display.contentCenterY, display.actualContentWidth, display.actualContentHeight )
+    sceneGroup:insert( sceneBackground )
 
-    local forecastHeaderBackground = display.newRect( display.contentCenterX, 100, display.contentWidth - 40, 50)
-    forecastHeaderBackground:setFillColor( 1 )
-    if myData.settings.theme == "dark" then
-        forecastHeaderBackground:setFillColor( 0.2 )
-    end
+    forecastHeaderBackground = display.newRect( display.contentCenterX, 100, display.contentWidth - 40, 50)
     sceneGroup:insert( forecastHeaderBackground )
 
-    local dayText = display.newText( "Date", 50, forecastHeaderBackground.y, theme.font, 14 )
-    dayText:setFillColor( unpack( theme.textColor ) )
+    dayText = display.newText( "Date", 50, forecastHeaderBackground.y, theme.font, 14 )
     sceneGroup:insert( dayText )
 
-    local hiloText = display.newText( "Hi/Lo", 95, forecastHeaderBackground.y, theme.font, 14 )
-    hiloText:setFillColor( unpack( theme.textColor ) )
+    hiloText = display.newText( "Hi/Lo", 95, forecastHeaderBackground.y, theme.font, 14 )
     sceneGroup:insert( hiloText )
 
-    local skyText = display.newText( "Skies", 140, forecastHeaderBackground.y, theme.font, 14 )
-    skyText:setFillColor( unpack( theme.textColor ) )
+    skyText = display.newText( "Skies", 140, forecastHeaderBackground.y, theme.font, 14 )
     sceneGroup:insert( skyText )
 
-    local precipText = display.newText( "Precip", 190, forecastHeaderBackground.y, theme.font, 14 )
-    precipText:setFillColor( unpack( theme.textColor ) )
+    precipText = display.newText( "Precip", 190, forecastHeaderBackground.y, theme.font, 14 )
     sceneGroup:insert( precipText )
 
-    local humidityText = display.newText( "Humidity", 260, forecastHeaderBackground.y, theme.font, 14 )
-    humidityText:setFillColor( unpack( theme.textColor ) )
+    humidityText = display.newText( "Humidity", 260, forecastHeaderBackground.y, theme.font, 14 )
     sceneGroup:insert( humidityText )
 
     if display.contentWidth > 320 then
-        local windText = display.newText( "Wind", 320, forecastHeaderBackground.y, theme.font, 14 )
+        windText = display.newText( "Wind", 320, forecastHeaderBackground.y, theme.font, 14 )
         windText:setFillColor( unpack( theme.textColor ) )
         sceneGroup:insert( windText )
     end
@@ -223,7 +228,7 @@ function scene:create( event )
         height = tableViewHeight,
         width = display.contentWidth - 40,
         onRowRender = onForecastRowRender,
-        onRowTouch = onForecastRowTouch,
+        -- onRowTouch = onForecastRowTouch,
         backgroundColor = theme.backgroundColor,
         listener = forecastListener
     })
@@ -234,7 +239,19 @@ function scene:show( event )
     local sceneGroup = self.view
 
     if event.phase == "will" then
-        myData.navBar:setLabel( myData.settings.locations[1].name )
+        UI.navBar:setLabel( myData.settings.locations[1].name )
+
+        sceneBackground:setFillColor( unpack( theme.backgroundColor ) )
+        forecastHeaderBackground:setFillColor( unpack( theme.rowBackgroundColor ) )
+        dayText:setFillColor( unpack( theme.textColor ) )
+        hiloText:setFillColor( unpack( theme.textColor ) )
+        skyText:setFillColor( unpack( theme.textColor ) )
+        precipText:setFillColor( unpack( theme.textColor ) )
+        humidityText:setFillColor( unpack( theme.textColor ) )
+        if display.contentWidth > 320 then
+            windText:setFillColor( unpack( theme.textColor ) )
+        end
+
         wx.fetchWeather( displayForecast )
     end
 end

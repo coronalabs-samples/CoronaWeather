@@ -2,12 +2,15 @@ local composer = require( "composer" )
 local scene = composer.newScene()
 
 local widget = require( "widget" )
-local myData = require( "mydata" )
 local json = require( "json" )
+
+local myData = require( "mydata" )
 local utility = require( "utility" )
 local wx = require( "weather" )
 local theme = require( "theme" )
+local UI = require( "ui" )
 
+local sceneBackground
 local locationText
 local temperatureText
 local icon
@@ -19,19 +22,29 @@ local mercury
 local thermometer
 local thermometerOverlay
 local compassNeedle
+local visibilityLabel
 local visibilityText
+local pressureLabel
 local pressureText
+local humidityLabel
 local humidityText
 local feelsLike
+local feelsLikeLabel
 local feelsLikeText
+local sunriseTextLabel
 local sunriseText
+local sunsetTextLabel
 local sunsetText
 local moonTextLabel
 local moonText
+local cloudCoverTextLabel
 local cloudCoverText
+local dewPointTextLabel
 local dewPointText
+local windSpeedLabel
 local windSpeedText
 local hourlyScrollView
+local poly
 local hourlyDateText = {}
 local hourlyTempText = {}
 local hourlyPercentText = {}
@@ -262,7 +275,7 @@ local function displayCurrentConditions( )
         height = 180,
         scrollWidth = #hourly.data * xWidth,
         scrollHeight = 150,
-        backgroundColor = myData.backgroundColor,
+        backgroundColor = theme.backgroundColor,
         isBounceEnabled = false,
         verticalScrollDisabled = true
     }
@@ -279,6 +292,10 @@ local function displayCurrentConditions( )
 --    for i = 1, #hourly.data do
 --        tempPoints[ #tempPoints + 1 ] = { x = xWidth * ( i - 1 ), y = 35 - hourly.data[ i ].temperature }
 --    end
+
+    table.remove( tempPoints )
+    tempPoints = nil
+    tempPoints = {}
     local maxPeriodTemperature = -999999
     for i = 1, #hourly.data do
         local periodTemperature = math.floor( wx.convertTemperature( tonumber( hourly.data[ i ].temperature ), "fahrenheit" ) + 0.5 )
@@ -338,8 +355,11 @@ local function displayCurrentConditions( )
         direction = "up"
     }
 --]]
-
-    local poly = display.newPolygon( 0, 20, tempPoints )
+    if poly then
+        poly:removeSelf()
+        poly = nil
+    end
+    poly = display.newPolygon( 0, 20, tempPoints )
     --local poly = display.newLine( tempPoints[1].x, tempPoints[1].y, tempPoints[2].x, tempPoints[2].y )
     --for i = 3, #tempPoints do
     --    poly:append( tempPoints[i].x, tempPoints[i].y)
@@ -359,9 +379,12 @@ end
 local function scrollListener( event )
 
     local phase = event.phase
-    if ( phase == "began" ) then print( "Scroll view was touched" )
-    elseif ( phase == "moved" ) then print( "Scroll view was moved" )
-    elseif ( phase == "ended" ) then print( "Scroll view was released" )
+    if ( phase == "began" ) then 
+        --print( "Scroll view was touched" )
+    elseif ( phase == "moved" ) then 
+        --print( "Scroll view was moved" )
+    elseif ( phase == "ended" ) then 
+        --print( "Scroll view was released" )
     end
 
     -- In the event a scroll limit is reached...
@@ -385,6 +408,9 @@ end
 function scene:create( event )
     local sceneGroup = self.view
 
+    sceneBackground = display.newRect( display.contentCenterX, display.contentCenterY, display.actualContentWidth, display.actualContentHeight )
+    sceneGroup:insert( sceneBackground )
+
     local scrollViewHeight = display.actualContentHeight - 100
     -- Create the widget
     forecastScrollView = widget.newScrollView
@@ -395,7 +421,7 @@ function scene:create( event )
         height = scrollViewHeight,
         scrollWidth = display.contentWidth,
         scrollHeight = 800,
-        backgroundColor = theme.backgroundColor,
+        hideBackground = true,
         listener = scrollListener
     }
     sceneGroup:insert( forecastScrollView )
@@ -405,15 +431,12 @@ function scene:create( event )
     -- crashes out if there isn't a display object in the view.
     --
 
-    myData.navBar:setLabel( myData.currentLocation )
-
     temperatureText = display.newText("" .. "º", display.contentWidth * 0.33, 70, theme.font, 100 )
     temperatureText:setFillColor( 0.33, 0.66, 0.99 )
     forecastScrollView:insert( temperatureText )
 
 
     weatherText = display.newText("", display.contentCenterX, display.contentWidth * 0.667, theme.font, 18 )
-    weatherText:setFillColor( theme.textColor )
     forecastScrollView:insert( weatherText )
 
     --rainChanceText = display.newText("Rain chance " .. "%", display.contentCenterX, 230, "HelveticaNeue-Thin", 20 )
@@ -421,96 +444,50 @@ function scene:create( event )
     --sceneGroup:insert( rainChanceText )
 
     highText = display.newText("", temperatureText.x - 40, temperatureText.y + 80, theme.font, 18)
-    highText:setFillColor( theme.textColor )
     forecastScrollView:insert( highText )
     highText.anchorX = 0.5
 
     lowText = display.newText("", temperatureText.x + 40, temperatureText.y + 80, theme.font, 18)
-    lowText:setFillColor( theme.textColor )
     forecastScrollView:insert( lowText )
     lowText.anchorX = 0.5
---[[
-    local thermometerFilename = "images/thermometer.png"
-    if "Android" == myData.platform then
-        thermometerFilename = "images/thermometer_dark.png"
-    end
 
-    thermometer = display.newImageRect( thermometerFilename, 45, 142 )
-    forecastScrollView:insert( thermometer )
-    thermometer.y = temperatureText.y
-    thermometer.x = display.contentWidth * 0.75
-
-    mercury = display.newRect( thermometer.x - 11.5, thermometer.y - 110, 8, 100)
-    mercury:setFillColor( 1, 0, 0 )
-    mercury.anchorY = 1
-    forecastScrollView:insert( mercury )
-
-    thermometerOverlay = display.newImageRect( "images/thermometer_overlay.png", 45, 142)
-    forecastScrollView:insert( thermometerOverlay )
-    thermometerOverlay.x = thermometer.x
-    thermometerOverlay.y = thermometer.y
---]]
---[[
-    local compassBackground = display.newImageRect( "images/compass.png", 128, 128 )
-    compassBackground.x = temperatureText.x - 15
-    compassBackground.y = temperatureText.y + 165
-    forecastScrollView:insert( compassBackground )
-    compassBackground.isVisible = false
-
-    compassNeedle = display.newImageRect( "images/compass_pointer.png", 128, 128 )
-    compassNeedle.x = compassBackground.x
-    compassNeedle.y = compassBackground.y
-    forecastScrollView:insert( compassNeedle )
-    compassNeedle.isVisible = false
---]]
-
-    local windSpeedLabel = display.newText( "Winds: ", 60, highText.y + 220, theme.font, 14 )
-    windSpeedLabel:setFillColor( theme.textColor )
+    windSpeedLabel = display.newText( "Winds: ", 60, highText.y + 220, theme.font, 14 )
     windSpeedLabel.anchorX = 1
     forecastScrollView:insert( windSpeedLabel )
     windSpeedText = display.newText( "", 70, windSpeedLabel.y , theme.fontBold, 14 )
-    windSpeedText:setFillColor( theme.textColor )
     windSpeedText.anchorX = 0
     forecastScrollView:insert( windSpeedText )
 
-    local visibilityLabel = display.newText( "Visibility:", 60, windSpeedText.y + 24, theme.font, 14 )
-    visibilityLabel:setFillColor( theme.textColor )
+    visibilityLabel = display.newText( "Visibility:", 60, windSpeedText.y + 24, theme.font, 14 )
     visibilityLabel.anchorX = 1
     forecastScrollView:insert( visibilityLabel )
     visibilityText = display.newText( "", 70, visibilityLabel.y, theme.fontBold, 14 )
-    visibilityText:setFillColor( theme.textColor )
     visibilityText.anchorX = 0
     forecastScrollView:insert( visibilityText )
 
-    local pressureLabel = display.newText( "Pressure:", 60, visibilityLabel.y + 24, theme.font, 14 )
-    pressureLabel:setFillColor( theme.textColor )
+    pressureLabel = display.newText( "Pressure:", 60, visibilityLabel.y + 24, theme.font, 14 )
     pressureLabel.anchorX = 1
     forecastScrollView:insert( pressureLabel )
     pressureText = display.newText( "", 70, pressureLabel.y, theme.fontBold, 14 )
-    pressureText:setFillColor( theme.textColor )
     pressureText.anchorX = 0
     forecastScrollView:insert( pressureText )
 
-    local humidityLabel = display.newText( "Humidity:", 60, pressureLabel.y + 24, theme.font, 14 )
-    humidityLabel:setFillColor( theme.textColor )
+    humidityLabel = display.newText( "Humidity:", 60, pressureLabel.y + 24, theme.font, 14 )
     humidityLabel.anchorX = 1
     forecastScrollView:insert( humidityLabel )
     humidityText = display.newText( "", 70, humidityLabel.y, theme.fontBold, 14 )
-    humidityText:setFillColor( theme.textColor )
     humidityText.anchorX = 0
     forecastScrollView:insert( humidityText )
 
-    local feelsLikeLabel = display.newText( "Feels like:", 60, humidityLabel.y + 24, theme.font, 14 )
-    feelsLikeLabel:setFillColor( theme.textColor )
+    feelsLikeLabel = display.newText( "Feels like:", 60, humidityLabel.y + 24, theme.font, 14 )
     feelsLikeLabel.anchorX = 1
     forecastScrollView:insert( feelsLikeLabel )
     feelsLikeText = display.newText( "", 70, feelsLikeLabel.y, theme.fontBold, 14 )
-    feelsLikeText:setFillColor( theme.textColor )
     feelsLikeText.anchorX = 0
     forecastScrollView:insert( feelsLikeText )
 
-    local sunriseTextLabel = display.newText( "Sunrise", display.contentWidth - 70, windSpeedLabel.y, theme.font, 14 )
-    sunriseTextLabel:setFillColor( theme.textColor )
+    sunriseTextLabel = display.newText( "Sunrise", display.contentWidth - 70, windSpeedLabel.y, theme.font, 14 )
+    
     sunriseTextLabel.anchorX = 1
     forecastScrollView:insert( sunriseTextLabel )
     sunriseText = display.newText( "", display.contentWidth - 60, sunriseTextLabel.y, theme.fontBold, 14 )
@@ -518,39 +495,34 @@ function scene:create( event )
     sunriseText.anchorX = 0
     forecastScrollView:insert( sunriseText )
 
-    local sunsetTextLabel = display.newText( "Sunset", display.contentWidth - 70, visibilityText.y, theme.font, 14 )
-    sunsetTextLabel:setFillColor( unpack( theme.textColor ) )
+    sunsetTextLabel = display.newText( "Sunset", display.contentWidth - 70, visibilityText.y, theme.font, 14 )
     sunsetTextLabel.anchorX = 1
     forecastScrollView:insert( sunsetTextLabel )
     sunsetText = display.newText( "", display.contentWidth - 60, sunsetTextLabel.y, theme.fontBold, 14 )
-    sunsetText:setFillColor( unpack( theme.textColor ) )
+    
     sunsetText.anchorX = 0
     forecastScrollView:insert( sunsetText )
 
     moonTextLabel = display.newText( "Moon phase", display.contentWidth - 70, pressureLabel.y, theme.font, 14 )
-    moonTextLabel:setFillColor( unpack( theme.textColor ) )
     moonTextLabel.anchorX = 1
     forecastScrollView:insert( moonTextLabel )
     moonText = display.newText( "", display.contentWidth - 60, moonTextLabel.y, theme.fontBold, 14 )
-    moonText:setFillColor( unpack( theme.textColor ) )
     moonText.anchorX = 0
     forecastScrollView:insert( moonText )
 
-    local cloudCoverTextLabel = display.newText( "Cloud Cover", display.contentWidth - 70, humidityText.y, theme.font, 14 )
-    cloudCoverTextLabel:setFillColor( unpack( theme.textColor ) )
+    cloudCoverTextLabel = display.newText( "Cloud Cover", display.contentWidth - 70, humidityText.y, theme.font, 14 )
+    
     cloudCoverTextLabel.anchorX = 1
     forecastScrollView:insert( cloudCoverTextLabel )
     cloudCoverText = display.newText( "", display.contentWidth - 60, cloudCoverTextLabel.y, theme.fontBold, 14 )
-    cloudCoverText:setFillColor( unpack( theme.textColor ) )
     cloudCoverText.anchorX = 0
     forecastScrollView:insert( cloudCoverText )
 
-    local dewPointTextLabel = display.newText( "DewPoint", display.contentWidth - 70, feelsLikeLabel.y, theme.font, 14 )
-    dewPointTextLabel:setFillColor( unpack( theme.textColor ) )
+    dewPointTextLabel = display.newText( "DewPoint", display.contentWidth - 70, feelsLikeLabel.y, theme.font, 14 )
+    
     dewPointTextLabel.anchorX = 1
     forecastScrollView:insert( dewPointTextLabel )
     dewPointText = display.newText( "", display.contentWidth - 60, dewPointTextLabel.y, theme.fontBold, 14 )
-    dewPointText:setFillColor( unpack( theme.textColor ) )
     dewPointText.anchorX = 0
     forecastScrollView:insert( dewPointText )
 end
@@ -563,12 +535,38 @@ function scene:show( event )
 
     if event.phase == "will" then
 
-        myData.navBar:setLabel( myData.settings.locations[1].name )
+        UI.navBar:setLabel( myData.settings.locations[1].name )
         for i = 1, #myData.settings.locations do
             if myData.settings.locations[i].selected then
-                myData.navBar:setLabel( myData.settings.locations[i].name )
+                UI.navBar:setLabel( myData.settings.locations[i].name )
+                break
             end
         end
+
+        sceneBackground:setFillColor( unpack( theme.backgroundColor ) )
+        weatherText:setFillColor( unpack( theme.textColor ) )
+        highText:setFillColor( unpack( theme.textColor ) )
+        lowText:setFillColor( unpack( theme.textColor ) )
+        windSpeedLabel:setFillColor( unpack( theme.textColor ) )
+        windSpeedText:setFillColor( unpack( theme.textColor ) )
+        humidityLabel:setFillColor( unpack( theme.textColor ) )
+        humidityText:setFillColor( unpack( theme.textColor ) )
+        visibilityLabel:setFillColor( unpack( theme.textColor ) )
+        visibilityText:setFillColor( unpack( theme.textColor ) )
+        feelsLikeLabel:setFillColor( unpack( theme.textColor ) )
+        feelsLikeText:setFillColor( unpack( theme.textColor ) )
+        sunriseTextLabel:setFillColor( unpack( theme.textColor ) )
+        sunsetText:setFillColor( unpack( theme.textColor ) )
+        sunsetTextLabel:setFillColor( unpack( theme.textColor ) )
+        sunsetText:setFillColor( unpack( theme.textColor ) )
+        pressureLabel:setFillColor( unpack( theme.textColor ) )
+        pressureText:setFillColor( unpack( theme.textColor ) )
+        moonTextLabel:setFillColor( unpack( theme.textColor ) )
+        moonText:setFillColor( unpack( theme.textColor ) )
+        cloudCoverTextLabel:setFillColor( unpack( theme.textColor ) )
+        cloudCoverText:setFillColor( unpack( theme.textColor ) )
+        dewPointTextLabel:setFillColor( unpack( theme.textColor ) )
+        dewPointText:setFillColor( unpack( theme.textColor ) )
 
         wx.fetchWeather( displayCurrentConditions )
     end

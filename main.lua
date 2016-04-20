@@ -1,54 +1,79 @@
+--
+-- Corona Weather - A business style sample app
+--
+-- MIT Licensed
+--
+-- main.lua -- main entry point
+--
 local composer = require( "composer" )
 local widget = require( "widget" )
+
+--
+-- widgetExtras -- holds some custom built widgets from Corona SDK tutorials
+--
 local widgetExtras = require( "widget-extras" )
+--
+-- utility - various handy add on functions
+--
 local utility = require( "utility" )
+--
+-- myData -- an emtpy table that can be required in multiple modules/scenes
+--           to allow easy passing of data between modules
 local myData = require( "mydata" )
-local device = require( "device" )
+--
+-- theme -- a data table of colors and font attributes to quickly change
+--          how the app looks
+--
 local theme = require( "theme" )
+local UI = require( "ui" )
 
-display.setStatusBar( display.HiddenStatusBar )
-
+--
+-- any globals will show up as warnings in the console log. Need a global? Use myData!
+--
 Runtime:setCheckGlobals( true )
-math.randomseed( os.time() )
 
-myData.wuAPIkey = "63786a2636b67f31"
+--
+-- Store our API keys for scenes that need them
+--
 myData.forecastIOkey = "5e07c45fcc74c5997d832a4ee792031e"
 myData.mapquestKey = "66w5YMUHLoYIETPddFEAyUAghVHMPXNL"
 myData.mapquestSecret = "yWGInvQLF72wjtcx"
-myData.openWeatherMapAppId = "8e6c844a847a4cbd4fd889039044f704"
 myData.bingMapKey = "AlNVpu8Z01qBfva8DhkrUg0WdxzdB3eeOdoO5TxHXRAmovpl5M_qQsda-zqqdzq8"
+-- Keep the weather API from updating too often, initialize to 0
 myData.lastRefresh = 0 -- force a download the first time.
-myData.latitude = 35.7789
-myData.longitude = -78.8003
+-- Once we detect our device/platform record it here when device decisions need to be made
 myData.platform = "iOS"
-myData.gps = {}
 
+--
+-- Detect the device we are on
+-- This is important because we are going to present a different UI based on the device. 
+-- iOS devices will have a tabBar controller at the bottom. Android will have a hamburger that will slide in
+-- a menu for instance.
 if "simulator" == system.getInfo("environment") and "iP" ~= string.sub( system.getInfo("model"), 1, 2 ) then
     myData.platform = "Android"
 elseif "device" == system.getInfo("environment") and "Android" == system.getInfo("platformName" ) then
     myData.platform = "Android"
 end
 
-if "iOS" == myData.platform then
-    display.setStatusBar( display.DefaultStatusBar )
-end
+display.setStatusBar( display.DefaultStatusBar )
 
 if "Android" == myData.platform then
+    -- Select the right widget theme for Android
     widget.setTheme( "widget_theme_android_holo_dark" )
-    theme.setTheme( "dark" )
-    myData.platform = "Android"
 end
 --
 -- Load saved in settings
+-- Function to load and save tables is in the utility.lua file
 --
 myData.settings = utility.loadTable("settings.json")
+-- If we fail to load the table, this must be a first run, or an install after a delete
+-- so setup up reasonable defaults
 if myData.settings == nil then
 	myData.settings = {}
-	myData.settings.soundOn = true
-	myData.settings.musicOn = true
-    myData.settings.isPaid = false
-    myData.settings.showIcons = false
     myData.settings.theme = "light"
+    if "Android" == myData.platform then
+        myData.settings.theme = "dark"
+    end
     myData.settings.tempUnits = "fahrenheit" -- fahrenheit or celsius
     myData.settings.distanceUnits = "miles" -- miles or kilometers
     myData.settings.locations = { { name = "Cary, NC", latitude = 35.7789, longitude = -78.8003, postalCode = "27519", selected = true },
@@ -60,142 +85,43 @@ if myData.settings == nil then
     myData.firstTime = true
 end
 
---
--- Set up the navBar controller
---
-local function leftButtonEvent( event )
-    if event.phase == "ended" then
-        local currScene = composer.getSceneName( "overlay" )
-        if currScene then
-            composer.hideOverlay( "fromRight", 500 )
-        else
-            composer.showOverlay( "menu", { isModal=true, time=500, effect="fromLeft" } )
+-- Set the theme to the user's choice or a reasonable first run default
+theme.setTheme( myData.settings.theme )
+-- Setup a reasonable default GPS location. The forecastIO API uses lat, long
+if #myData.settings.locations > 0 then
+    for i = 1, #myData.settings.locations do
+        myData.currentLocation = nil
+        if myData.settings.locations[i].selected then
+            myData.currentLocation = myData.settings.locations[i].name
+            myData.latitude = myData.settings.locations[i].latitude
+            myData.longitude = myData.settings.locations[i].longitude
+        end
+        if myData.currentLocation == nil then
+            myData.currentLocation = myData.settings.locations[1].name
+            myData.latitude = myData.settings.locations[1].latitude
+            myData.longitude = myData.settings.locations[1].longitude
         end
     end
-    return true
+else
+    myData.currentLocation = "Palo Alto, CA"
+    myData.latitude = 37.4419
+    myData.longitude = -122.1430
 end
-
-local leftButton = {
-    width = 25,
-    height = 25,
-    defaultFile = "images/hamburger.png",
-    overFile = "images/hamburger.png",
-    onEvent = leftButtonEvent,
-}
-
-local includeStatusBar = false
-if "iOS" == myData.platform then
-    includeStatusBar = true
+--
+-- Set up the navBar controller's hamburger icon
+-- The navBar controller needs a button object and a handler function
+-- for it. If the menu is showing, hide it, if its hidden show it.
+--
+UI.createNavBar()
+if myData.platform == "iOS" then
+    UI.createTabBar()
 end
-
-myData.navBar = widget.newNavigationBar({
-    isTransluscent = false,
-    backgroundColor = theme.navBarBackgroundColor,
-    title = myData.currentLocation, 
-    titleColor = theme.navBarTextColor,
-    font = theme.fontBold,
-    height = 50,
-    includeStatusBar = includeStatusBar,
-    leftButton = leftButton
-})
 
 --
 -- Set up the tabBar controller
+-- since the app supports themeing, we will need access to the tabBar to try and 
+-- change colors
 --
-local tabBar
-
-local function showWeather()
-    if myData.platform == "iOS" then
-        tabBar:setSelected(1)
-    end
-    composer.gotoScene("currentConditions", {time=250, effect="crossFade"})
-    return true
-end
-
-local function showForecast()
-    tabBar:setSelected(2)
-    composer.gotoScene("forecast", {time=250, effect="crossFade"})
-    return true
-end
-
-local function showLocations()
-    tabBar:setSelected(3)
-    composer.gotoScene("locations", {time=250, effect="crossFade"})
-    return true
-end
-
-local function showSettings( event )
-    tabBar:setSelected(4)
-    composer.gotoScene("appsettings", {time=250, effect="crossFade"})
-    return true
-end
-
-local tabButtons = {
-    {
-        label = "Current Weather",
-        defaultFile = "images/weather_default.png",
-        overFile = "images/weather_selected.png",
-        labelColor = { 
-            default = { 0.25, 0.25, 0.25 }, 
-            over = { 0.08, 0.49, 0.98 }
-        },
-        width = 32,
-        height = 32,
-        onPress = showWeather,
-        selected = true,
-        id = "weather"
-    },
-    {
-        label = "Forecast",
-        defaultFile = "images/forecast.png",
-        overFile = "images/forecast_selected.png",
-        labelColor = { 
-            default = { 0.25, 0.25, 0.25 }, 
-            over = { 0.08, 0.49, 0.98 }
-        },
-        width = 32,
-        height = 32,
-        onPress = showForecast,
-        id = "forecast"
-    },
-    {
-        label = "Locations",
-        defaultFile = "images/locations.png",
-        overFile = "images/locations_selected.png",
-        labelColor = { 
-            default = { 0.25, 0.25, 0.25 }, 
-            over = { 0.08, 0.49, 0.98 }
-        },
-        width = 32,
-        height = 32,
-        onPress = showLocations,
-        id = "location"
-    },
-
-    {
-        label = "Settings",
-        defaultFile = "images/settings_default.png",
-        overFile = "images/settings_selected.png",
-        labelColor = { 
-            default = { 0.25, 0.25, 0.25 }, 
-            over = { 0.08, 0.49, 0.98 }
-        },
-        width = 32,
-        height = 32,
-        onPress = showSettings,
-        id = "settings"
-    },
-}
-
-if myData.platform == "iOS" then
-    tabBar = widget.newTabBar{
-        top =  display.contentHeight - 50,
-        left = 0,
-        width = display.contentWidth,    
-        buttons = tabButtons,
-        height = 50,
-    }
-end
 
 --
 -- Other system events
@@ -206,7 +132,7 @@ local function onKeyEvent( event )
     local keyName = event.keyName
     print( event.phase, event.keyName )
 
-    if ( "back" == keyName and phase == "up" ) then
+    if ( "back" == keyName and "up" == phase ) then
         native.requestExit()
         return true
     end
@@ -214,24 +140,9 @@ local function onKeyEvent( event )
 end
 
 --add the key callback
-if device.isAndroid then
+if "Android" == myData.platform then
     Runtime:addEventListener( "key", onKeyEvent )
 end
-
-local locationHandler = function( event )
-
-    -- Check for error (user may have turned off location services)
-    if ( event.errorCode ) then
-        --native.showAlert( "GPS Location Error", event.errorMessage, {"OK"} )
-        print( "Location error: " .. tostring( event.errorMessage ) )
-    else
-        myData.gps.latitude = event.latitude
-        myData.gps.longitude = event.longitude
-    end
-end
-
--- Activate location listener
-
 
 --
 -- handle system events
@@ -239,17 +150,13 @@ end
 local function systemEvents(event)
     print("systemEvent " .. event.type)
     if event.type == "applicationSuspend" then
-        Runtime:removeEventListener( "location", locationHandler )
         utility.saveTable( myData.settings, "settings.json" )
     elseif event.type == "applicationResume" then
-        Runtime:addEventListener( "location", locationHandler )
-        showWeather()
+        UI.showWeather()
     elseif event.type == "applicationExit" then
-        Runtime:removeEventListener( "location", locationHandler )
         utility.saveTable( myData.settings, "settings.json" )
     elseif event.type == "applicationStart" then
-        Runtime:addEventListener( "location", locationHandler )
-        showWeather()
+        UI.showWeather()
     end
     return true
 end

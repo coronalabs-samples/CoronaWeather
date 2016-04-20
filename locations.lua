@@ -6,11 +6,13 @@ local json = require( "json" )
 local myData = require( "mydata" )
 local utility = require( "utility" )
 local theme = require( "theme" )
+local UI = require( "ui" )
 
 local locationEntryField
 local searchTableView = nil
 local locationsTableView
 local locationChoices = {}
+local sceneBackground
 
 function scene.hideTextField()
 	print("hiding text field")
@@ -276,10 +278,9 @@ function scene:create( event )
 	-- setup a page background, really not that important though composer
 	-- crashes out if there isn't a display object in the view.
 	--
-	myData.navBar:setLabel( "Locations" )
-	local background = display.newRect( display.contentCenterX, display.contentCenterY, display.contentWidth, display.contentHeight )
-	background:setFillColor( unpack( theme.backgroundColor ) )
-	sceneGroup:insert( background )
+	UI.navBar:setLabel( "Locations" )
+    sceneBackground = display.newRect( display.contentCenterX, display.contentCenterY, display.actualContentWidth, display.actualContentHeight )
+    sceneGroup:insert( sceneBackground )
 
 	local locationLabel = display.newText("Enter location", display.contentCenterX, 90, myData.fontBold, 18 )
 	locationLabel:setFillColor( unpack( theme.textColor ) )
@@ -298,7 +299,7 @@ function scene:create( event )
         width = display.contentWidth - 40,
         onRowRender = onLocationRowRender,
         onRowTouch = onLocationRowTouch,
-        backgroundColor = myData.backgroundColor,
+        hideBackground = true,
         listener = locationListener
 	})
 	sceneGroup:insert( locationsTableView )
@@ -310,7 +311,7 @@ function scene:show( event )
 	if event.phase == "will" then
 
 		reloadData()
-
+		sceneBackground:setFillColor( unpack( theme.backgroundColor ) )
 	else
 		local fieldWidth = display.contentWidth - 40
 

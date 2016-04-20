@@ -375,7 +375,7 @@ function widget.newNavigationBar( options )
             background.fill = { type = "gradient", color1={0.5, 0.5, 0.5}, color2={0, 0, 0}}
         end
     end
-
+    barContainer._background = background
     barContainer._title = display.newText(opt.title, background.x, background.y + statusBarPad * 0.5, opt.font, opt.fontSize)
     barContainer._title:setFillColor(unpack(opt.titleColor))
     barContainer:insert(barContainer._title)
@@ -405,6 +405,7 @@ function widget.newNavigationBar( options )
         end
         leftButton.x = 15 + leftButton.width * 0.5
         leftButton.y = barContainer._title.y
+        barContainer._leftButton = leftButton
         barContainer:insert(leftButton)
     end
 
@@ -433,6 +434,7 @@ function widget.newNavigationBar( options )
         end
         rightButton.x = display.contentWidth - (15 + rightButton.width * 0.5)
         rightButton.y = barContainer._title.y
+        barContainer._rightButton = rightButton
         barContainer:insert(rightButton)
     end
 
@@ -444,6 +446,12 @@ function widget.newNavigationBar( options )
         return(self._title.text)
     end
 
+    function barContainer:setBackgroundColor( color )
+        self.backgroundColor:setFillColor( unpack( color ) )
+    end
+
+    function barContainer:setButtonColor(whichButton, color )
+    end
 
     return barContainer
 end
