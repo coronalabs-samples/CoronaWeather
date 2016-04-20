@@ -163,7 +163,7 @@ settings =
                         NSIncludesSubdomains = true,
                         NSThirdPartyExceptionAllowsInsecureHTTPLoads = true
                     },
-                    ["mapquestapi.com"] =
+                    ["virtualearth.net"] =
                     {
                         NSIncludesSubdomains = true,
                         NSThirdPartyExceptionAllowsInsecureHTTPLoads = true

@@ -93,7 +93,7 @@ local function onRadioButtonPress( event )
     elseif switch.id == "miles" then
     	myData.settings.distanceUnits = "miles"
     elseif switch.id == "kilometers" then
-    	myData.settings.dinstanceUnits = "kilometers"
+    	myData.settings.distanceUnits = "kilometers"
     elseif switch.id == "inches" then
     	myData.settings.pressureUnits = "inches"
     elseif switch.id == "millibars" then
@@ -139,8 +139,8 @@ function scene:create( event )
 
 	local scrollViewHeight = display.actualContentHeight - 100
 
-    if "Android" == myData.platform then
-        scrollViewHeight = display.actualContentHeight - 50
+    if "iOS" == myData.platform then
+        scrollViewHeight = scrollViewHeight - 50
     end
     -- Create the widget
     local scrollView = widget.newScrollView

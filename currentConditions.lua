@@ -241,7 +241,7 @@ local function displayCurrentConditions( )
     weatherText.y = weatherIcon.y + 70
     weatherText.anchorX = 0.5
 
-    dewPointText.text = dewPoint
+    dewPointText.text = dewPoint .. "º"
     
     sunriseText.text = os.date( "%H:%M", sunriseTime )
     sunsetText.text = os.date( "%H:%M", sunsetTime )
@@ -297,15 +297,19 @@ local function displayCurrentConditions( )
     tempPoints = nil
     tempPoints = {}
     local maxPeriodTemperature = -999999
+    local minPeriodTemperature = 999999
     for i = 1, #hourly.data do
         local periodTemperature = math.floor( wx.convertTemperature( tonumber( hourly.data[ i ].temperature ), "fahrenheit" ) + 0.5 )
         tempPoints[ #tempPoints + 1 ] = xWidth * ( i - 1 )
-        tempPoints[ #tempPoints + 1 ] = 0 - periodTemperature 
+        tempPoints[ #tempPoints + 1 ] = 0 - periodTemperature
         if periodTemperature > maxPeriodTemperature then
             maxPeriodTemperature = periodTemperature
         end
+        if periodTemperature < minPeriodTemperature then
+            minPeriodTemperature = periodTemperature
+        end
         if i < #hourly.data then -- skip the last temp since there isn't a polygon slice for it
-            local hourlyTempText = display.newText( tostring( math.floor( wx.convertTemperature( tonumber( hourly.data[ i ].temperature ), myData.settings.tempUnits ) + 0.5 ) ) .. "º", xWidth * ( i - 1 ) + 3, 120 - periodTemperature - 20, theme.font, 12 )
+            local hourlyTempText = display.newText( tostring( math.floor( wx.convertTemperature( tonumber( hourly.data[ i ].temperature ), myData.settings.tempUnits ) + 0.5 ) ) .. "º", xWidth * ( i - 1 ) + 3, 120 - periodTemperature + 10, theme.font, 12 )
             hourlyTempText.anchorX = 0
             hourlyTempText.anchorY = 1
             hourlyTempText:setFillColor( unpack( theme.textColor ) )
@@ -328,13 +332,27 @@ local function displayCurrentConditions( )
                 local forecastTimeText = display.newText( forecastTime, precipChanceText.x, precipChanceText.y + 30, theme.font, 12 )
                 forecastTimeText:setFillColor( unpack( theme.textColor ) )
                 hourlyIconGroup:insert( forecastTimeText )
+                local newDay = tonumber( os.date("%H", hourly.data[i].time ) )
+                if newDay == 0 then
+                    local newDayLine = display.newLine( forecastTimeText.x - xWidth * 0.5, forecastTimeText.y - 10, forecastTimeText.x - xWidth * 0.5, forecastTimeText.y - 150 )
+                    newDayLine.strokeWidth = 2
+                    newDayLine:setStrokeColor( 0.66 )
+                    hourlyIconGroup:insert( newDayLine )
+                    local monthValue = tonumber( os.date( "%m", hourly.data[i].time ) )
+                    local dayValue = tonumber( os.date( "%d", hourly.data[i].time ) )
+                    local weekDayValue = os.date( "%a", hourly.data[i].time )
+                    local dayText = display.newText( weekDayValue .. "\n" .. monthValue .. "/" .. dayValue, forecastTimeText.x + xWidth - 5, forecastTimeText.y - 140, 100, 0, theme.fontBold, 12 )
+                    hourlyIconGroup:insert( dayText )
+                    dayText:setFillColor( unpack( theme.textColor ) )
+                end
             end
         end
     end
     tempPoints[ #tempPoints + 1 ] = tempPoints[ #tempPoints - 1 ]
-    tempPoints[ #tempPoints + 1 ] = 50 
+    local range = maxPeriodTemperature - minPeriodTemperature - 20 -- need some padding at the bottom of the graph.
+    tempPoints[ #tempPoints + 1 ] = range 
     tempPoints[ #tempPoints + 1 ] = 0
-    tempPoints[ #tempPoints + 1 ] = 50 
+    tempPoints[ #tempPoints + 1 ] = range 
 
     local topColor = { 0.3916, 0.6172, 1.0 }
     if tonumber( maxPeriodTemperature ) > 75 then
@@ -359,7 +377,7 @@ local function displayCurrentConditions( )
         poly:removeSelf()
         poly = nil
     end
-    poly = display.newPolygon( 0, 20, tempPoints )
+    poly = display.newPolygon( 0, 50, tempPoints )
     --local poly = display.newLine( tempPoints[1].x, tempPoints[1].y, tempPoints[2].x, tempPoints[2].y )
     --for i = 3, #tempPoints do
     --    poly:append( tempPoints[i].x, tempPoints[i].y)
@@ -422,6 +440,7 @@ function scene:create( event )
         scrollWidth = display.contentWidth,
         scrollHeight = 800,
         hideBackground = true,
+        horizontalScrollDisabled = true,
         listener = scrollListener
     }
     sceneGroup:insert( forecastScrollView )
@@ -451,38 +470,38 @@ function scene:create( event )
     forecastScrollView:insert( lowText )
     lowText.anchorX = 0.5
 
-    windSpeedLabel = display.newText( "Winds: ", 60, highText.y + 220, theme.font, 14 )
+    windSpeedLabel = display.newText( "Winds: ", 70, highText.y + 240, theme.font, 14 )
     windSpeedLabel.anchorX = 1
     forecastScrollView:insert( windSpeedLabel )
-    windSpeedText = display.newText( "", 70, windSpeedLabel.y , theme.fontBold, 14 )
+    windSpeedText = display.newText( "", 80, windSpeedLabel.y , theme.fontBold, 14 )
     windSpeedText.anchorX = 0
     forecastScrollView:insert( windSpeedText )
 
-    visibilityLabel = display.newText( "Visibility:", 60, windSpeedText.y + 24, theme.font, 14 )
+    visibilityLabel = display.newText( "Visibility:", 70, windSpeedText.y + 24, theme.font, 14 )
     visibilityLabel.anchorX = 1
     forecastScrollView:insert( visibilityLabel )
-    visibilityText = display.newText( "", 70, visibilityLabel.y, theme.fontBold, 14 )
+    visibilityText = display.newText( "", 80, visibilityLabel.y, theme.fontBold, 14 )
     visibilityText.anchorX = 0
     forecastScrollView:insert( visibilityText )
 
-    pressureLabel = display.newText( "Pressure:", 60, visibilityLabel.y + 24, theme.font, 14 )
+    pressureLabel = display.newText( "Pressure:", 70, visibilityLabel.y + 24, theme.font, 14 )
     pressureLabel.anchorX = 1
     forecastScrollView:insert( pressureLabel )
-    pressureText = display.newText( "", 70, pressureLabel.y, theme.fontBold, 14 )
+    pressureText = display.newText( "", 80, pressureLabel.y, theme.fontBold, 14 )
     pressureText.anchorX = 0
     forecastScrollView:insert( pressureText )
 
-    humidityLabel = display.newText( "Humidity:", 60, pressureLabel.y + 24, theme.font, 14 )
+    humidityLabel = display.newText( "Humidity:", 70, pressureLabel.y + 24, theme.font, 14 )
     humidityLabel.anchorX = 1
     forecastScrollView:insert( humidityLabel )
-    humidityText = display.newText( "", 70, humidityLabel.y, theme.fontBold, 14 )
+    humidityText = display.newText( "", 80, humidityLabel.y, theme.fontBold, 14 )
     humidityText.anchorX = 0
     forecastScrollView:insert( humidityText )
 
-    feelsLikeLabel = display.newText( "Feels like:", 60, humidityLabel.y + 24, theme.font, 14 )
+    feelsLikeLabel = display.newText( "Feels like:", 70, humidityLabel.y + 24, theme.font, 14 )
     feelsLikeLabel.anchorX = 1
     forecastScrollView:insert( feelsLikeLabel )
-    feelsLikeText = display.newText( "", 70, feelsLikeLabel.y, theme.fontBold, 14 )
+    feelsLikeText = display.newText( "", 80, feelsLikeLabel.y, theme.fontBold, 14 )
     feelsLikeText.anchorX = 0
     forecastScrollView:insert( feelsLikeText )
 

@@ -17,6 +17,7 @@ local hiloText
 local skyText
 local precipText
 local humidityText
+local windText
 
 
 function string.upperCaseFirstLetter( self )

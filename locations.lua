@@ -59,24 +59,26 @@ local function reloadData()
 end
 
 local function onSearchRowTouch( event )
-	if event.phase == "tap" then
-		local idx = event.row.id
-		for i = 1, #myData.settings.locations do
-			myData.settings.locations[i].selected = false
+	if event.row then 
+		if "tap" == event.phase or "release" == event.phase then
+			local idx = event.row.id
+			for i = 1, #myData.settings.locations do
+				myData.settings.locations[i].selected = false
+			end
+			myData.settings.locations[#myData.settings.locations + 1] = { 
+				name = locationChoices[idx].name, 
+				latitude = locationChoices[idx].latitude, 
+				longitude = locationChoices[idx].longitude,
+				selected = true
+			}
+			utility.saveTable( myData.settings, "settings.json" )
+			reloadData()
+			searchTableView:removeSelf()
+			searchTableView = nil
+			locationEntryField.text = ""
 		end
-		myData.settings.locations[#myData.settings.locations + 1] = { 
-			name = locationChoices[idx].name, 
-			latitude = locationChoices[idx].latitude, 
-			longitude = locationChoices[idx].longitude,
-			selected = true
-		}
-		utility.saveTable( myData.settings, "settings.json" )
-		reloadData()
-		searchTableView:removeSelf()
-		searchTableView = nil
-		locationEntryField.text = ""
-
 	end
+	native.setKeyboardFocus( nil )
 	return true
 end
 
@@ -148,22 +150,7 @@ local function geocodeResponse( event )
 			locationChoices[i].matches = true
 		end
 		displayHits( nil )
-		--[[
-		local response = json.decode( event.response )
-		print( json.prettify( response.resourceSets[1].resources) )
-		myData.latitude = response.resourceSets[1].resources[1].point.coordinates[1]
-		myData.longitude = response.resourceSets[1].resources[1].point.coordinates[2]
-		--print(myData.latitude, myData.longitude)
-		if myData.settings.location == "home" then
-			myData.settings.home.latitude = myData.latitude
-			myData.settings.home.longitude = myData.longitude
-		elseif myData.settings.location == "away" then
-			myData.settings.away.latitude = myData.latitude
-			myData.settings.away.longitude = myData.longitude
-		end
-		utility.saveTable( myData.settings, "settings.json" )
-		--utility.print_r(myData)
-		--]]
+
 	end
 end
 
@@ -179,6 +166,7 @@ end
 local hasFetchedLocationList = false
 local function fieldHandler( textField )
 	return function( event )
+		print( event.phase, textField().text )
 		if ( "began" == event.phase ) then
 			-- This is the "keyboard has appeared" event
 			-- In some cases you may want to adjust the interface when the keyboard appears.
@@ -213,24 +201,31 @@ local function onLocationRowTouch( event )
 	end
 	if event.phase == "swipeLeft" and not event.row.deleteIsShowing then
 		-- handle delete row here
-		transition.to( event.row.deleteButton, { time=250, x = event.row.deleteButton.x - 50 })
-		event.row.deleteIsShowing = true
+		if event.row then
+			transition.to( event.row.deleteButton, { time=250, x = event.row.deleteButton.x - 51 })
+			event.row.deleteIsShowing = true
+		end
 	elseif event.phase == "swipeRight" and event.row.deleteIsShowing then
-		transition.to( event.row.deleteButton, { time=250, x = event.row.deleteButton.x + 50 })	
-		event.row.deleteIsShowing = false	
-	elseif event.phase == "tap" then
-		if event.row.deleteIsShowing then
-			transition.to( event.row.deleteButton, { time=250, x = event.row.deleteButton.x + 50 })	
-			event.row.deleteIsShowing = false
+		if event.row then
+			transition.to( event.row.deleteButton, { time=250, x = event.row.deleteButton.x + 51 })	
+			event.row.deleteIsShowing = false	
 		end
-		local row = event.row
-		for i = 1, #myData.settings.locations do
-			myData.settings.locations[i].selected = false
+	elseif "tap" == event.phase or "release" == event.phase then
+		if event.row then
+			if event.row.deleteIsShowing then
+				transition.to( event.row.deleteButton, { time=250, x = event.row.deleteButton.x + 51 })	
+				event.row.deleteIsShowing = false
+			end
+			local row = event.row
+			for i = 1, #myData.settings.locations do
+				myData.settings.locations[i].selected = false
+			end
+			myData.settings.locations[row.id].selected = true
+			utility.saveTable( myData.settings, "settings.json" )
+			reloadData()
 		end
-		myData.settings.locations[row.id].selected = true
-		utility.saveTable( myData.settings, "settings.json" )
-		reloadData()
 	end
+	native.setKeyboardFocus( nil )
 end
 
 local function onLocationRowRender( event )
@@ -258,7 +253,7 @@ local function onLocationRowRender( event )
     deleteButtonText:setFillColor( 1 )
     deleteButton:insert( deleteButtonText )
     deleteButton:addEventListener( "touch", deleteRow )
-    deleteButton.x = rowWidth --+ 25
+    deleteButton.x = rowWidth + 1 --+ 25
     deleteButton.y = 0 -- rowHeight --* 0.5
     deleteButton.id = params.id
     row.deleteButton = deleteButton
@@ -267,6 +262,13 @@ end
 
 local function locationListener( event )
 	-- stub out for now
+end
+
+local function dismisKeyboard( event )
+	if "ended" == event.phase then
+		native.setKeyboardFocus( nil )
+	end
+	return true
 end
 
 --
@@ -281,6 +283,7 @@ function scene:create( event )
 	UI.navBar:setLabel( "Locations" )
     sceneBackground = display.newRect( display.contentCenterX, display.contentCenterY, display.actualContentWidth, display.actualContentHeight )
     sceneGroup:insert( sceneBackground )
+    sceneBackground:addEventListener( "touch", dismisKeyboard )
 
 	local locationLabel = display.newText("Enter location", display.contentCenterX, 90, myData.fontBold, 18 )
 	locationLabel:setFillColor( unpack( theme.textColor ) )

@@ -59,6 +59,10 @@ function UI.createNavBar()
         overFile = "images/hamburger-" .. theme.name .. ".png",
         onEvent = leftButtonEvent,
     }
+    if myData.platform == "iOS" then
+        leftButton = nil
+    end
+
     if theme.name == "light" then
         display.setStatusBar( display.DefaultStatusBar )
     else
@@ -110,6 +114,17 @@ function UI.showSettings( event )
     return true
 end
 
+local options =  {
+    frames =
+    {
+        { x = 0,  y = 0, width = 10, height = 50 },
+        { x = 10, y = 0, width = 10, height = 50 },
+        { x = 20, y = 0, width = 10, height = 50 },
+        { x = 30, y = 0, width = 10, height = 50 }
+    },
+    sheetContentWidth = 40,
+    sheetContentHeight = 50
+}
 
 function UI.createTabBar()
     --
@@ -181,18 +196,25 @@ function UI.createTabBar()
             },
         }
 
+        local tabBarImageSheet
+        if theme.name == "light" then
+            tabBarImageSheet = graphics.newImageSheet( "images/tabbarbg-light.png", options )
+        else
+            tabBarImageSheet = graphics.newImageSheet( "images/tabbarbg-dark.png", options )
+        end
         print( theme.name )
         UI.tabBar = widget.newTabBar{
             top =  display.contentHeight - 50,
             left = 0,
             width = display.contentWidth,    
             buttons = tabButtons,
-            backgroundFile = "images/tabbarbg-" .. theme.name .. ".png",
-            tabSelectedLeftFile = "images/tabbarbg-" .. theme.name .. ".png",
-            tabSelectedMiddleFile = "images/tabbarbg-" .. theme.name .. ".png",
-            tabSelectedRightFile = "images/tabbarbg-" .. theme.name .. ".png",
-            tabSelectedFrameWidth = 32, 
-            tabSelectedFrameHeight = 32,
+            sheet = tabBarImageSheet,
+            backgroundFrame = 1,
+            tabSelectedLeftFrame = 2,
+            tabSelectedMiddleFrame = 3,
+            tabSelectedRightFrame = 4,
+            tabSelectedFrameWidth = 10,
+            tabSelectedFrameHeight = 50,
             height = 50,
         }
     end
