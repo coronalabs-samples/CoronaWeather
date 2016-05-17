@@ -57,7 +57,7 @@ if "simulator" == system.getInfo("environment") and "iP" ~= string.sub( system.g
 elseif "device" == system.getInfo("environment") and "Android" == system.getInfo("platformName" ) then
     myData.platform = "Android"
 end
-Runtime:setCheckGlobals( true )
+--Runtime:setCheckGlobals( true )
 display.setStatusBar( display.DefaultStatusBar )
 
 if "Android" == myData.platform then

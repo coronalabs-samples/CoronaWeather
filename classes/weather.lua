@@ -37,6 +37,7 @@ end
 
 -- This function is called if we need to actually query the server.     
 local function processWeatherRequest( event )
+    print( json.prettify( event ) )
 	myData.currentWeatherData = json.decode(event.response)
     myData.lastRefresh = os.time()
     if M.callBack then
@@ -67,8 +68,9 @@ function M.fetchWeather( callBack )
         native.showAlert( "Error", "You don't have any locations selected.", { "Okay "} )
     end
 
-    print( "*** Fetching Weather ***")
     local forecastIOURL = "https://api.forecast.io/forecast/" .. myData.forecastIOkey .. "/" .. tostring(myData.latitude) .. "," .. tostring(myData.longitude) .. "?units=si"
+    print( "*** Fetching Weather ", forecastIOURL)
+
     network.request( forecastIOURL, "GET", processWeatherRequest )
 
 --[[
