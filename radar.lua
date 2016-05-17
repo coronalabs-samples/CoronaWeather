@@ -2,8 +2,93 @@ local composer = require( "composer" )
 local scene = composer.newScene()
 
 local widget = require( "widget" )
-local myData = require( "mydata" )
-local utility = require( "utility" )
+local myData = require( "classes.mydata" )
+local utility = require( "libs.utility" )
+
+local html3 = [[<!doctype html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="http://openlayers.org/en/v3.15.1/css/ol.css" type="text/css">
+        <style>
+        .map {
+            height: 400px;
+            width: 100%;
+        }
+        </style>
+        <script src="http://openlayers.org/api/OpenLayers.js"></script>
+    </head>
+    <body>
+        <div id="map" class="map"></div>
+        <script type="text/javascript">
+            //Center of map
+            var lonlat = new OpenLayers.LonLat(-81.8, 24.5);
+
+            var map = new OpenLayers.Map("basicMap");
+            // Create OSM overlays
+            var mapnik = new OpenLayers.Layer.OSM();
+            var layer_precipitation = new OpenLayers.Layer.XYZ(
+                "precipitation",
+                "http://${s}.tile.openweathermap.org/map/precipitation/${z}/${x}/${y}.png",
+                {
+                    isBaseLayer: false,
+                    opacity: 0.7,
+                    sphericalMercator: true
+                }
+            );
+            map.addLayers([mapnik, layer_precipitation, layer_cloud]);
+        </script>
+    </body>
+</html>
+]]
+
+local html = [[
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="http://openlayers.org/en/v3.15.1/css/ol.css" type="text/css">
+    <style>
+      .map {
+        height: 400px;
+        width: 100%;
+      }
+    </style>
+    <script src="http://openlayers.org/en/v3.15.1/build/ol.js" type="text/javascript"></script>
+    <title>OpenLayers 3 example</title>
+  </head>
+  <body>
+    <div id="map" class="map"></div>
+    <script type="text/javascript">
+]]
+
+local html2 = [[
+      var map = new ol.Map({
+        target: 'map',
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.MapQuest({layer: 'osm'})
+          })
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([longitude, latitude]),
+          zoom: 8
+        })
+      });
+      var layer_precipitation = new OpenLayers.Layer.XYZ(
+        "precipitation",
+        "http://${s}.tile.openweathermap.org/map/precipitation/${z}/${x}/${y}.png",
+        {
+            isBaseLayer: false,
+            opacity: 0.7,
+            sphericalMercator: true
+        }
+    );
+
+
+    map.addLayers([mapnik, layer_precipitation]);
+    </script>
+  </body>
+</html>
+]]
 
 local header = [[<!DOCTYPE html>
 <html>
@@ -142,12 +227,12 @@ function scene:show( event )
         local path = system.pathForFile( "radar.html" , system.TemporaryDirectory )
         local fp = io.open( path, "w" )
         if fp then
-            fp:write(header)
-            fp:write("var latitude = " .. tostring(35.7789) .. ";\n")
-            fp:write("var longitude = " .. tostring(-78.8003) .. ";\n")
-            fp:write("var screenWidth = " .. tostring( display.contentWidth) .. ";\n")
-            fp:write("var screenHeight = " .. tostring( display.contentHeight - 50) .. ";\n")
-            fp:write(body)
+            fp:write(html3)
+            --fp:write("var latitude = " .. tostring(35.7789) .. ";\n")
+            --fp:write("var longitude = " .. tostring(-78.8003) .. ";\n")
+            --fp:write("var screenWidth = " .. tostring( display.contentWidth) .. ";\n")
+            --fp:write("var screenHeight = " .. tostring( display.contentHeight - 50) .. ";\n")
+            --fp:write(html2)
             fp:close()
         end
     else

@@ -27,6 +27,8 @@ function scene:show( event )
     params = event.params
 
     if event.phase == "did" then
+        composer.removeScene( params.scene )
+        composer.gotoScene( params.scene )
     end
 end
 

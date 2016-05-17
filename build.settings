@@ -3,7 +3,9 @@ settings =
     orientation =
     {
         default = "portrait",
-        supported = { "portrait", "portraitUpsideDown" }
+        supported = { "portrait" }
+        --default = "landscapeRight",
+        --supported = { "landscapeRight", "landscapeLeft" }
     },
     android =
     {
@@ -152,12 +154,17 @@ settings =
                 }
             },
             UIRequiredDeviceCapabilities = {"location-services", "gps" },
-            NSLocationWhenInUseUsageDescription = "This app uses maps and GPS when active to determine where to report weather for.",
+            NSLocationWhenInUseUsageDescription = "This app uses the GPS when active to determine where to report weather for.",
             UIApplicationExitsOnSuspend = false,    -- must be false for single sign-on to work
             NSAppTransportSecurity =
             {
                 NSExceptionDomains =
                 {
+                    ["geonames.org"] =
+                    {
+                        NSIncludesSubdomains = true,
+                        NSThirdPartyExceptionAllowsInsecureHTTPLoads = true
+                    },
                     ["openweathermap.org"] =
                     {
                         NSIncludesSubdomains = true,
