@@ -77,19 +77,19 @@ myData.settings = utility.loadTable("settings.json")
 -- But we will keep it simple for now.
 if myData.settings == nil then
 	myData.settings = {}
+    myData.settings.firstTime = true
     myData.settings.theme = "light"
     if "Android" == myData.platform then
         myData.settings.theme = "dark"
     end
     myData.settings.tempUnits = "fahrenheit" -- fahrenheit or celsius
     myData.settings.distanceUnits = "miles" -- miles or kilometers
-    myData.settings.locations = {   { name = "Current Location", latutide = 0, longitude = 0, selected = true, noDelete = true },
+    myData.settings.locations = {   { name = "Current Location", latitude = 0, longitude = 0, selected = true, noDelete = true },
                                     { name = "Cary, NC", latitude = 35.7789, longitude = -78.8003, postalCode = "27519", selected = false },
                                     { name = "Palo Alto, CA", latitude = 37.4419, longitude = -122.1430, postalCode = "94303", selected = false },
                                     { name = "Austin, TX", latitude = 30.2672, longitude = -97.7431, postalCode = "78701", selected = false }
                                 }
 	utility.saveTable(myData.settings, "settings.json")
-    myData.firstTime = true
 end
 
 -- Set the theme to the user's choice or a reasonable first run default
@@ -193,7 +193,13 @@ local function systemEvents(event)
     elseif event.type == "applicationExit" then
         utility.saveTable( myData.settings, "settings.json" )
     elseif event.type == "applicationStart" then
-        UI.showWeather()
+        if myData.settings.firstTime then
+            myData.settings.firstTime = false
+            utility.saveTable(myData.settings, "settings.json")
+            UI.showLocations()
+        else
+            UI.showWeather()
+        end
     end
     return true
 end
