@@ -33,7 +33,7 @@ end
 -- function to change scenes to the current conditions scene
 local function goConditions( event )
     if event.phase == "ended" then
-        composer.gotoScene( "currentConditions", { time=500, effect="slideRight" } )
+        composer.gotoScene( "scenes.currentConditions", { time=500, effect="slideRight" } )
     end
     return true
 end
@@ -41,7 +41,7 @@ end
 -- function to change scenes to the forecast scene
 local function goForecast( event )
     if event.phase == "ended" then
-        composer.gotoScene( "forecast", { time=500, effect="slideRight" } )
+        composer.gotoScene( "scenes.forecast", { time=500, effect="slideRight" } )
     end
     return true
 end
@@ -49,7 +49,7 @@ end
 -- funciton to change to the location entry scene
 local function goLocations( event )
     if event.phase == "ended" then
-        composer.gotoScene( "locations", { time=500, effect="slideRight" } )
+        composer.gotoScene( "scenes.locations", { time=500, effect="slideRight" } )
     end
     return true
 end
@@ -57,7 +57,7 @@ end
 -- go to the app settings scene
 local function goSettings( event )
     if event.phase == "ended" then
-        composer.gotoScene( "appsettings", { time=500, effect="slideRight" } )
+        composer.gotoScene( "scenes.appsettings", { time=500, effect="slideRight" } )
     end
     return true
 end
