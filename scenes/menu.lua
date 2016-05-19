@@ -64,9 +64,15 @@ end
 
 -- This function will make a single text button with an icon and return it as it's own group.
 -- We will be making several of these, no need to repeat ourselves (DRY)
-local function makeMenuItem(text, iconFile, width, height, font, fontSize, handler)
+local function makeMenuItem(text, menuWidth, menuHeight, iconFile, width, height, font, fontSize, handler)
     -- we will use a groupt to contain the text and icon as one item.
     local buttonGroup = display.newGroup()
+
+    local buttonBackground = display.newRect( 0, 0, menuWidth, menuHeight)
+    buttonBackground.anchorX = 0
+    buttonBackground.anchorY = 0
+    buttonBackground:setFillColor( 1 )
+    buttonGroup:insert( buttonBackground )
     -- create the icon
     local icon = display.newImageRect( iconFile, width, height )
     buttonGroup:insert( icon )
@@ -78,8 +84,9 @@ local function makeMenuItem(text, iconFile, width, height, font, fontSize, handl
     buttonText.anchorX = 0
     buttonGroup:insert( buttonText )
     -- Add a touch handler to the group.
-    buttonGroup:addEventListener( "touch", handler )
-
+    buttonBackground:addEventListener( "touch", handler )
+    icon:addEventListener( "touch", handler )
+    buttonText:addEventListener( "touch", handler )
     -- return the group back to the caller
     return buttonGroup
 end
@@ -105,6 +112,7 @@ function scene:create( event )
 
     -- make a white backgrounded menu background
     local menuWidth = 160
+    local menuHeight = 30
     local statusBarPad = display.topStatusBarContentHeight
 
     local menuGroup = display.newGroup()
@@ -118,26 +126,26 @@ function scene:create( event )
     menuGroup:insert( menuBackground )
 
     -- make the buttons
-    local currentConditionsButton = makeMenuItem( "Current Conditions", "images/temperature.png", 24, 24, myData.font, 12, goConditions )
+    local currentConditionsButton = makeMenuItem( "Current Conditions", menuWidth, menuHeight, "images/temperature.png", 24, 24, myData.font, 12, goConditions )
     menuGroup:insert( currentConditionsButton )
     currentConditionsButton.anchorX = 0
     currentConditionsButton.x = 0
     currentConditionsButton.y = 20
 
     -- each button is positioned relative to the one before it. That way if you need to resposition one, the rest follow
-    local forecastButton = makeMenuItem( "Forecast", "images/forecast.png", 24, 24, myData.font, 12, goForecast )
+    local forecastButton = makeMenuItem( "Forecast", menuWidth, menuHeight, "images/forecast.png", 24, 24, myData.font, 12, goForecast )
     menuGroup:insert( forecastButton )
     forecastButton.anchorX = 0
     forecastButton.x = 0
     forecastButton.y = currentConditionsButton.y + 35
 
-    local locationButton = makeMenuItem( "Locations", "images/locations.png", 24, 24, myData.font, 12, goLocations )
+    local locationButton = makeMenuItem( "Locations", menuWidth, menuHeight, "images/locations.png", 24, 24, myData.font, 12, goLocations )
     menuGroup:insert( locationButton )
     locationButton.anchorX = 0
     locationButton.x = 0
     locationButton.y = forecastButton.y + 35
 
-    local settingsButton = makeMenuItem( "Settings", "images/android_settings.png", 24, 24, myData.font, 12, goSettings )
+    local settingsButton = makeMenuItem( "Settings", menuWidth, menuHeight, "images/android_settings.png", 24, 24, myData.font, 12, goSettings )
     menuGroup:insert( settingsButton )
     settingsButton.anchorX = 0
     settingsButton.x = 0
