@@ -133,6 +133,8 @@ end
 function scene:create( event )
 	local sceneGroup = self.view
 
+	local statusBarPad = display.topStatusBarContentHeight
+
 	sceneBackground = display.newRect( display.contentCenterX, display.contentCenterY, display.contentWidth, display.contentHeight )
 	sceneGroup:insert( sceneBackground )
 
@@ -140,7 +142,7 @@ function scene:create( event )
 	-- Make it the full height of the screen less 50 px for the navBar and 50px of padding
 	-- then adjust for the tabBar on iOS
 
-	local scrollViewHeight = display.actualContentHeight - 100
+	local scrollViewHeight = display.actualContentHeight - 100 - statusBarPad
 
     if "iOS" == myData.platform then
         scrollViewHeight = scrollViewHeight - 50
@@ -148,7 +150,7 @@ function scene:create( event )
     -- Create the widget
     local scrollView = widget.newScrollView
     {
-        top = 80,
+        top = 80 + statusBarPad,
         left = 0,
         width = display.actualContentWidth,
         height = scrollViewHeight,

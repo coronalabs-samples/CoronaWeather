@@ -101,34 +101,42 @@ function scene:create( event )
     -- allow touches on the background to also close the menu.
     background:addEventListener( "touch", closeMenu )
 
-    -- make a white backgrounded menu background that is 40% of the width of the screen. 
-    -- Positioning it at 20% of the width will anchor it to the left side.
-    local menuBackground = display.newRect(display.actualContentWidth * 0.2, display.contentCenterY, display.actualContentWidth * 0.4, display.actualContentHeight )
+    -- make a white backgrounded menu background
+    local menuWidth = 160
+    local statusBarPad = display.topStatusBarContentHeight
+
+    local menuGroup = display.newGroup()
+    sceneGroup:insert( menuGroup )
+    menuGroup.y = 50 + statusBarPad
+
+    local menuBackground = display.newRect(0, 0, menuWidth, display.actualContentHeight - statusBarPad - 50 )
     menuBackground:setFillColor( 1, 1, 1, 1)
-    sceneGroup:insert( menuBackground )
+    menuBackground.anchorX = 0
+    menuBackground.anchorY = 0
+    menuGroup:insert( menuBackground )
 
     -- make the buttons
     local currentConditionsButton = makeMenuItem( "Current Conditions", "images/temperature.png", 24, 24, myData.font, 12, goConditions )
-    sceneGroup:insert( currentConditionsButton )
+    menuGroup:insert( currentConditionsButton )
     currentConditionsButton.anchorX = 0
     currentConditionsButton.x = 0
-    currentConditionsButton.y = 70
+    currentConditionsButton.y = 20
 
     -- each button is positioned relative to the one before it. That way if you need to resposition one, the rest follow
     local forecastButton = makeMenuItem( "Forecast", "images/forecast.png", 24, 24, myData.font, 12, goForecast )
-    sceneGroup:insert( forecastButton )
+    menuGroup:insert( forecastButton )
     forecastButton.anchorX = 0
     forecastButton.x = 0
     forecastButton.y = currentConditionsButton.y + 35
 
     local locationButton = makeMenuItem( "Locations", "images/locations.png", 24, 24, myData.font, 12, goLocations )
-    sceneGroup:insert( locationButton )
+    menuGroup:insert( locationButton )
     locationButton.anchorX = 0
     locationButton.x = 0
     locationButton.y = forecastButton.y + 35
 
     local settingsButton = makeMenuItem( "Settings", "images/android_settings.png", 24, 24, myData.font, 12, goSettings )
-    sceneGroup:insert( settingsButton )
+    menuGroup:insert( settingsButton )
     settingsButton.anchorX = 0
     settingsButton.x = 0
     settingsButton.y = locationButton.y + 35

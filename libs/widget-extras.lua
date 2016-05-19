@@ -339,7 +339,7 @@ function widget.newNavigationBar( options )
     if opt.includeStatusBar then
         statusBarPad = display.topStatusBarContentHeight
     end
-
+    print( "statusBar: ", statusBarPad )
     opt.x = customOptions.x or display.contentCenterX
     opt.y = customOptions.y or (opt.height + statusBarPad) * 0.5
     opt.id = customOptions.id

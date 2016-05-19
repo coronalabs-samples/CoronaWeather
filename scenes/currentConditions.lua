@@ -109,6 +109,7 @@ local function displayCurrentConditions( )
     -- show an alert if the weather isn't available
     if not response then
         native.showAlert("Oops!", "Forcast information currently not avaialble!", { "Okay" } )
+        return false -- no need to try and run the rest of the function if we don't have our forecast.the
     end
 
     -- the data coming back from our API may have an "alerts" table if there is severe weather
@@ -354,7 +355,7 @@ local function displayCurrentConditions( )
                 forecastTime = string.sub( forecastTime, 2 )
             end
             -- create the display object
-            local forecastTimeText = display.newText( forecastTime, precipChanceText.x, precipChanceText.y + 20, theme.font, 12 )
+            local forecastTimeText = display.newText( forecastTime, precipChanceText.x + 4, precipChanceText.y + 20, theme.font, 12 )
             forecastTimeText:setFillColor( unpack( theme.textColor ) )
             hourlyScrollView:insert( forecastTimeText )
         end
@@ -424,7 +425,7 @@ function scene:create( event )
     -- Create the widget
     forecastScrollView = widget.newScrollView
     {
-        top = 0 + display.topStatusBarContentHeight,
+        top = 30 + display.topStatusBarContentHeight,
         left = 0,
         width = display.actualContentWidth,
         height = scrollViewHeight,

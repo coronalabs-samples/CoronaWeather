@@ -186,11 +186,12 @@ function scene:create( event )
     -- setup a page background, really not that important though composer
     -- crashes out if there isn't a display object in the view.
     --
+    local statusBarPad = display.topStatusBarContentHeight
 
     sceneBackground = display.newRect( display.contentCenterX, display.contentCenterY, display.actualContentWidth, display.actualContentHeight )
     sceneGroup:insert( sceneBackground )
 
-    forecastHeaderBackground = display.newRect( display.contentCenterX, 100, display.contentWidth - 40, 50)
+    forecastHeaderBackground = display.newRect( display.contentCenterX, 100 + statusBarPad, display.contentWidth - 40, 50)
     sceneGroup:insert( forecastHeaderBackground )
 
     dayText = display.newText( "Date", 50, forecastHeaderBackground.y, theme.font, 14 )
@@ -215,7 +216,7 @@ function scene:create( event )
     end
 
     local tableViewHeight = 350 -- 7 * 50
-    local availableHeight = display.contentHeight - 125
+    local availableHeight = display.contentHeight - 125 - statusBarPad
     if myData.platform == "iOS" then
         availableHeight = availableHeight - 50 -- compensate for the tabBar at the bottom
     end
@@ -225,7 +226,7 @@ function scene:create( event )
 
     forecastTableView = widget.newTableView({
         left = 20,
-        top = 130,
+        top = 130 + statusBarPad,
         height = tableViewHeight,
         width = display.contentWidth - 40,
         onRowRender = onForecastRowRender,

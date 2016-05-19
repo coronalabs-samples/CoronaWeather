@@ -188,6 +188,9 @@ local function systemEvents(event)
     print("systemEvent " .. event.type)
     if event.type == "applicationSuspend" then
         utility.saveTable( myData.settings, "settings.json" )
+        if myData.db then
+            myData.db:close()
+        end
     elseif event.type == "applicationResume" then
         UI.showWeather()
     elseif event.type == "applicationExit" then

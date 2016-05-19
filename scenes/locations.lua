@@ -45,7 +45,6 @@ local searchTableView = nil 	-- The tableView to hold our dynamic search results
 local locationsTableView 		-- The tableView to display the user's selected locations
 local locationChoices = {}		-- Tempoary table to hold the SQL search results
 local sceneBackground 			-- needs accessed in multiple functions for themimg reasons
-local db 						-- The city location database
 local wasSwiped 				-- Flag to help separate touch events
 
 -- Function to hide the text field
@@ -56,12 +55,15 @@ local wasSwiped 				-- Flag to help separate touch events
 function scene.hideTextField()
 	print("hiding text field")
 	locationEntryField.alpha = 0
+	locationEntryField.x = locationEntryField.x + 200
 end
 
 -- function to show the text field.
 function scene.showTextField()
 	print("showing text field")
 	locationEntryField.alpha = 1
+	locationEntryField.x = locationEntryField.x - 200
+
 end
 
 -- function to completly dump the tableView and reload it's data
@@ -221,7 +223,7 @@ local function lookupCity( address )
 	table.remove( locationChoices )
 	locationChoices = nil
 	locationChoices = {}
-	for row in db:nrows("SELECT * FROM cities WHERE LOWER(city) LIKE '" .. address .. "%'") do
+	for row in myData.db:nrows("SELECT * FROM cities WHERE LOWER(city) LIKE '" .. address .. "%'") do
     	locationChoices[ #locationChoices + 1 ] = { name = row.city, latitude = row.latitude, longitude = row.longitude }
 	end
 	displayHits()
@@ -243,6 +245,11 @@ local function fieldHandler( textField )
 			-- don't query the database for one or two letters.
 			if string.len( textField().text ) > 2 then
 				lookupCity( textField().text )
+			else
+				if searchTableView then
+					searchTableView:removeSelf()
+					searchTableView = nil
+				end
 			end
 		elseif ( "submitted" == event.phase ) then
 			-- This event occurs when the user presses the "return" key (if available) on the onscreen keyboard
@@ -401,6 +408,8 @@ end
 function scene:create( event )
 	local sceneGroup = self.view
 
+	local statusBarPad = display.topStatusBarContentHeight
+
 	-- make a rectangle for the backgrouned and color it to the current theme
     sceneBackground = display.newRect( display.contentCenterX, display.contentCenterY, display.actualContentWidth, display.actualContentHeight )
     sceneGroup:insert( sceneBackground )
@@ -408,7 +417,7 @@ function scene:create( event )
     -- make sure that touches outside of places that expect them will hide the keyboard
     sceneBackground:addEventListener( "touch", dismisKeyboard )
 
-	local locationLabel = display.newText("Enter location", display.contentCenterX, 90, myData.fontBold, 18 )
+	local locationLabel = display.newText("Enter location", display.contentCenterX, 90 + statusBarPad, myData.fontBold, 18 )
 	locationLabel:setFillColor( unpack( theme.textColor ) )
 	sceneGroup:insert( locationLabel)
 
@@ -417,7 +426,7 @@ function scene:create( event )
 	-- The total for the navBar + tabBar + locationLabel, the text field and sufficient padding
 	-- to make it look nice is 210 pixels of UI. The tableView can occupy the rest
 
-	local locationTableViewHeight = display.actualContentHeight - 210
+	local locationTableViewHeight = display.actualContentHeight - 210 - statusBarPad
 	if "Android" == myData.platform then
 		-- adjust for lack of a tabBar at the bottom on Android
 		locationTableViewHeight = locationTableViewHeight + 50 
@@ -427,7 +436,7 @@ function scene:create( event )
 	-- hasn't been created yet.
 	locationsTableView = widget.newTableView({
         left = 20,
-        top = locationLabel.y + 60,
+        top = locationLabel.y + 60 + statusBarPad,
         height = locationTableViewHeight,
         width = display.contentWidth - 40,
         onRowRender = onLocationRowRender,
@@ -446,7 +455,7 @@ function scene:show( event )
 	if event.phase == "will" then
 		-- before the scene comes on screen open the city DB
 		local path = system.pathForFile( "citydata.db", system.ResourceDirectory )
-		db = sqlite3.open( path )   
+		myData.db = sqlite3.open( path )   
 		-- reload the user's locations
 		reloadData()
 		-- set the navBar
@@ -454,11 +463,13 @@ function scene:show( event )
 		-- set the theme
 		sceneBackground:setFillColor( unpack( theme.backgroundColor ) )
 	else
+		local statusBarPad = display.topStatusBarContentHeight
+
 		-- after the scene is on the screen
 		-- calcuate how wide the text entry field will be (leave 20 px padding on both sides)
 		local fieldWidth = display.contentWidth - 40
 		-- create the text field and handler. Doing this before the scene is on the screen looks weird.
-		locationEntryField = native.newTextField( 20, 120, fieldWidth, 30 )
+		locationEntryField = native.newTextField( 20, 120 + statusBarPad, fieldWidth, 30 )
 		locationEntryField:addEventListener( "userInput", fieldHandler( function() return locationEntryField end ) ) 
 		sceneGroup:insert( locationEntryField)
 		locationEntryField.anchorX = 0
@@ -472,7 +483,8 @@ function scene:hide( event )
 	
 	if event.phase == "will" then
 		-- before we leave the screen, close the database, since it was opened in show()
-		db:close()
+		myData.db:close()
+		myData.db = nil
 		-- remove the text field, since we created it in show().
 		locationEntryField:removeSelf();
 		locationEntryField = nil
