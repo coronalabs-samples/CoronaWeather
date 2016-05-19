@@ -25,7 +25,7 @@ local myData = require( "classes.mydata" )
 -- function to hide the menu
 local function closeMenu( event )
     if event.phase == "ended" then
-        composer.hideOverlay( false, "fromLeft", 500 )
+        composer.hideOverlay( false, "fromLeft", 250 )
     end
     return true
 end
@@ -33,7 +33,7 @@ end
 -- function to change scenes to the current conditions scene
 local function goConditions( event )
     if event.phase == "ended" then
-        composer.gotoScene( "scenes.currentConditions", { time=500, effect="slideRight" } )
+        composer.gotoScene( "scenes.currentConditions", { time=250, effect="slideLeft" } )
     end
     return true
 end
@@ -41,7 +41,7 @@ end
 -- function to change scenes to the forecast scene
 local function goForecast( event )
     if event.phase == "ended" then
-        composer.gotoScene( "scenes.forecast", { time=500, effect="slideRight" } )
+        composer.gotoScene( "scenes.forecast", { time=250, effect="slideLeft" } )
     end
     return true
 end
@@ -49,7 +49,7 @@ end
 -- funciton to change to the location entry scene
 local function goLocations( event )
     if event.phase == "ended" then
-        composer.gotoScene( "scenes.locations", { time=500, effect="slideRight" } )
+        composer.gotoScene( "scenes.locations", { time=250, effect="slideLeft" } )
     end
     return true
 end
@@ -57,7 +57,7 @@ end
 -- go to the app settings scene
 local function goSettings( event )
     if event.phase == "ended" then
-        composer.gotoScene( "scenes.appsettings", { time=500, effect="slideRight" } )
+        composer.gotoScene( "scenes.appsettings", { time=250, effect="slideLeft" } )
     end
     return true
 end
@@ -95,8 +95,10 @@ function scene:create( event )
     -- crashes out if there isn't a display object in the view.
     --
     -- create a semi-transparent background for the whole screen.
-    local background = display.newRect( display.contentCenterX, display.contentCenterY, display.actualContentWidth, display.actualContentHeight )
+    local background = display.newRect( 0, 0, display.actualContentWidth * 2, display.actualContentHeight )
     background:setFillColor( 0, 0, 0, 0.66 )
+    background.anchorX = 0
+    background.anchorY = 0
     sceneGroup:insert( background )
     -- allow touches on the background to also close the menu.
     background:addEventListener( "touch", closeMenu )

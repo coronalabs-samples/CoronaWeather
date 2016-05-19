@@ -38,9 +38,9 @@ local function leftButtonEvent( event )
     if event.phase == "ended" then
         local currScene = composer.getSceneName( "overlay" )
         if currScene then
-            composer.hideOverlay( "fromRight", 500 )
+            composer.hideOverlay( "fromRight", 250 )
         else
-            composer.showOverlay( "scenes.menu", { isModal=true, time=500, effect="fromLeft" } )
+            composer.showOverlay( "scenes.menu", { isModal=true, time=250, effect="fromLeft" } )
         end
     end
     return true
