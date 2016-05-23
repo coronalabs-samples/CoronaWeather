@@ -183,8 +183,8 @@ local function displayHits( )
 	searchTableView = widget.newTableView({
         left = 20,
         top = locationEntryField.y + 15,
-        height = #locationChoices * 40,
-        width = display.contentWidth - 40,
+        height = display.actualContentHeight - locationEntryField.y - 65,
+        width = display.actualContentWidth - 40,
         onRowRender = onSearchRowRender,
         onRowTouch = onSearchRowTouch,
 	})
@@ -201,6 +201,8 @@ local function displayHits( )
     	rowColor = { default={ 0.4, 0.4, 0.4 }, over={ 0.5, 0.5, 0.5 } }
     	lineColor = { 0, 0, 0 }
     end
+    print("Before inserting rows into tableView")
+    local t = system.getTimer()
 	for i = 1, #locationChoices do
 		searchTableView:insertRow({
             isCategory = isCategory,
@@ -215,6 +217,7 @@ local function displayHits( )
 			},
 		})
 	end
+	print("After inserting rows into tableView", system.getTimer() - t)
 end
 
 -- Look up a string in the sqlite database. Return a list of matched locations. This is called
@@ -223,10 +226,15 @@ local function lookupCity( address )
 	table.remove( locationChoices )
 	locationChoices = nil
 	locationChoices = {}
+	print("Before Query" )
+	local t = system.getTimer( )
 	for row in myData.db:nrows("SELECT * FROM cities WHERE LOWER(city) LIKE '" .. address .. "%'") do
     	locationChoices[ #locationChoices + 1 ] = { name = row.city, latitude = row.latitude, longitude = row.longitude }
 	end
-	displayHits()
+	print("After Query", system.getTimer() - t)
+	if #locationChoices <= 100 then
+		displayHits()
+	end
 end
 
 -- handle the user input

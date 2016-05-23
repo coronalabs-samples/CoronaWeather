@@ -49,16 +49,7 @@ local dewPointText
 local windSpeedLabel
 local windSpeedText
 local hourlyScrollView
-local poly
-local hourlyDateText = {}
-local hourlyTempText = {}
-local hourlyPercentText = {}
-local hourlyImage = {}
-local icons = {}
-
-local tempPoints = {}
-local pathPoints = {}
-local curve
+local tabletPadding
 
 local forecastTableView
 local forecastScrollView
@@ -123,20 +114,24 @@ local function displayCurrentConditions( )
     -- need to when time comes to build TV versions of the app.
 
     -- look for any alerts to display the alerts banner
+    if severeWeatherButtonGroup and severeWeatherButtonGroup.removeSelf then
+        severeWeatherButtonGroup:removeSelf()
+        severeWeatherButtonGroup = nil
+    end
     local alerts = response.alerts
     if alerts and #alerts > 0 then -- severe weather
         -- we have alerts, make a banner at the top of the display below the navBar to display this
         severeWeatherButtonGroup = display.newGroup()
         forecastScrollView:insert( severeWeatherButtonGroup )
-        local severeWeatherButton = display.newRect(display.contentCenterX, 10, display.actualContentWidth, 20 )
+        local severeWeatherButton = display.newRect(display.contentCenterX, 10 + display.topStatusBarContentHeight, display.actualContentWidth, 20 )
         severeWeatherButton:setFillColor( 1, 0.25, 0.25 )
         severeWeatherButton.strokeWidth = 1
         severeWeatherButton:setStrokeColor( 1, 0.5, 0.5 )
         severeWeatherButtonGroup:insert( severeWeatherButton )
-        local severeWeatherText = display.newText( "Severe Weather", display.contentCenterX, 10, theme.font, 14 )
+        local severeWeatherText = display.newText( "Severe Weather", display.contentCenterX, 10 + display.topStatusBarContentHeight, theme.font, 14 )
         severeWeatherText:setFillColor( 1 )
         severeWeatherButtonGroup:insert( severeWeatherText )
-        local closeSevereWeatherButton = display.newText( "×", display.actualContentWidth - 15, 10, theme.font, 14 )
+        local closeSevereWeatherButton = display.newText( "×", display.actualContentWidth - 15, 10 + display.topStatusBarContentHeight, theme.font, 14 )
         closeSevereWeatherButton:setFillColor( 1 )
         severeWeatherButtonGroup:insert( closeSevereWeatherButton )
         severeWeatherButtonGroup:addEventListener( "touch", displayAlerts )
@@ -294,9 +289,6 @@ local function displayCurrentConditions( )
     -- each bar will be xWidth wide
     local xWidth = 32
 
-    -- table to hold the bars
-    local temperatureBars = {}
-
     -- to be able to make each temperature bar, we need to know the minimum and maximum in the data set. 
     -- This first pass loop will scan through and determine those values.
     local maxPeriodTemperature = -999999
@@ -313,6 +305,28 @@ local function displayCurrentConditions( )
 
     -- now that we know min and max, compute the range
     local temperatureRange = maxPeriodTemperature - minPeriodTemperature
+
+    if hourlyScrollView then
+        hourlyScrollView:removeSelf()
+        hourlyScrollView = nil
+    end
+    hourlyScrollView = widget.newScrollView
+    {
+        width = display.actualContentWidth,
+        height = 200,
+        scrollWidth = display.actualContentWidth * 2,
+        scrollHeight = 200,
+        hideBackground = true, 
+        isBounceEnabled = false,
+        verticalScrollDisabled = true,
+        listener = hourlyListener
+    }
+    forecastScrollView:insert( hourlyScrollView )
+    hourlyScrollView.x = display.contentCenterX
+    hourlyScrollView.y = 280 + tabletPadding
+
+    -- table to hold the bars
+    local temperatureBars = {}
 
     -- this loop will now go create the display objects
     for i = 1, #hourly.data do
@@ -568,19 +582,6 @@ function scene:create( event )
     dewPointText.anchorX = 0
     almanacContainer:insert( dewPointText )
 
-    hourlyScrollView = widget.newScrollView
-    {
-        width = display.actualContentWidth,
-        height = 200,
-        scrollWidth = display.actualContentWidth * 2,
-        scrollHeight = 200,
-        hideBackground = true, 
-        isBounceEnabled = false,
-        verticalScrollDisabled = true,
-        listener = hourlyListener
-    }
-    forecastScrollView:insert( hourlyScrollView )
-
 end
 
 function scene:show( event )
@@ -604,43 +605,21 @@ function scene:show( event )
             end
         end
 
-        -- if we are portrait oriented (mobile devices) then organize content
-        -- to fit the vertical screen
-        if display.actualContentWidth < display.actualContentHeight then -- portrait orientation
-            -- if we are on a tablet, we need to spread somethings out a bit
-            local tabletPadding = 0
-            if display.actualContentWidth >= 600 then -- must be a tablet
-                tabletPadding = 30
-            end
-            local quarterWidth = display.actualContentWidth * 0.25
-            temperatureContainer.x = 10
-            temperatureContainer.y = 10 + tabletPadding
-            weatherContainer.x = quarterWidth * 2
-            weatherContainer.y = 10 + tabletPadding
-            hourlyScrollView.x = display.contentCenterX
-            hourlyScrollView.y = 280 + tabletPadding
-            conditionsContainer.x = 10
-            conditionsContainer.y = 400 + tabletPadding
-            almanacContainer.x = quarterWidth * 2 + 10
-            almanacContainer.y = 400 + tabletPadding
-        else
-            -- If we are landscape draw things differently
-            local tabletPadding = 0
-            if display.actualContentWidth >= 600 then 
-                tabletPadding = 30
-            end
-            local quarterWidth = display.actualContentWidth * 0.25
-            temperatureContainer.x = 10
-            temperatureContainer.y = 10 + tabletPadding
-            weatherContainer.x = quarterWidth + 10
-            weatherContainer.y = 10 + tabletPadding
-            hourlyScrollView.x = display.contentCenterX
-            hourlyScrollView.y = 280 + tabletPadding
-            conditionsContainer.x = quarterWidth * 2 + 10
-            conditionsContainer.y = 30 + tabletPadding
-            almanacContainer.x = quarterWidth * 3 + 10
-            almanacContainer.y = 30 + tabletPadding
+
+        -- if we are on a tablet, we need to spread somethings out a bit
+        tabletPadding = 0
+        if display.actualContentWidth >= 600 then -- must be a tablet
+            tabletPadding = 30
         end
+        local quarterWidth = display.actualContentWidth * 0.25
+        temperatureContainer.x = 10
+        temperatureContainer.y = 10 + tabletPadding
+        weatherContainer.x = quarterWidth * 2
+        weatherContainer.y = 10 + tabletPadding
+        conditionsContainer.x = 10
+        conditionsContainer.y = 400 + tabletPadding
+        almanacContainer.x = quarterWidth * 2 + 10
+        almanacContainer.y = 400 + tabletPadding
 
         -- apply the theme colors to everything
         sceneBackground:setFillColor( unpack( theme.backgroundColor ) )

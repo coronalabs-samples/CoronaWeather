@@ -78,7 +78,7 @@ function scene:create( event )
     --
     -- Lets get all the weather bits we are interested in
     --
-    alerts = testAlerts
+    --alerts = testAlerts
     print( json.prettify( alerts ) , #alerts)
 
     -- make a rectangle for the backgrouned and color it to the current theme
