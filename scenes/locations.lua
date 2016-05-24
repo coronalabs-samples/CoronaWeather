@@ -44,6 +44,7 @@ local locationEntryField 		-- holds the entry string
 local searchTableView = nil 	-- The tableView to hold our dynamic search results
 local locationsTableView 		-- The tableView to display the user's selected locations
 local locationChoices = {}		-- Tempoary table to hold the SQL search results
+local locationLabel 			-- Label for the form
 local sceneBackground 			-- needs accessed in multiple functions for themimg reasons
 local wasSwiped 				-- Flag to help separate touch events
 
@@ -153,6 +154,7 @@ local function onSearchRowTouch( event )
 	return true
 end
 
+
 -- This function will render each row of the search results table. It's only going to
 -- show one object, a text string for the found city. 
 local function onSearchRowRender( event )
@@ -195,15 +197,12 @@ local function displayHits( )
 	-- table.
     local isCategory = false
     local rowHeight = 40
-    local rowColor = { default={ 1, 1, 1 }, over={ 1, 0.5, 0, 0.2 } }
-    local lineColor = { 0.95, 0.95, 0.95 }
-    if "Android" == myData.platform then
-    	rowColor = { default={ 0.4, 0.4, 0.4 }, over={ 0.5, 0.5, 0.5 } }
-    	lineColor = { 0, 0, 0 }
-    end
+    local rowColor = { default=theme.rowBackgroundColor, over=theme.rowBackgroundColor }
+    local lineColor = { 0.5, 0.5, 0.5 }
     print("Before inserting rows into tableView")
     local t = system.getTimer()
 	for i = 1, #locationChoices do
+	    print( locationChoices[i].name)
 		searchTableView:insertRow({
             isCategory = isCategory,
             rowHeight = rowHeight,
@@ -228,8 +227,9 @@ local function lookupCity( address )
 	locationChoices = {}
 	print("Before Query" )
 	local t = system.getTimer( )
-	for row in myData.db:nrows("SELECT * FROM cities WHERE LOWER(city) LIKE '" .. address .. "%'") do
+	for row in myData.db:nrows("SELECT * FROM cities WHERE LOWER(city) LIKE '" .. address .. "%' ORDER BY city") do
     	locationChoices[ #locationChoices + 1 ] = { name = row.city, latitude = row.latitude, longitude = row.longitude }
+    	print(row.city)
 	end
 	print("After Query", system.getTimer() - t)
 	if #locationChoices <= 100 then
@@ -425,8 +425,7 @@ function scene:create( event )
     -- make sure that touches outside of places that expect them will hide the keyboard
     sceneBackground:addEventListener( "touch", dismisKeyboard )
 
-	local locationLabel = display.newText("Enter location", display.contentCenterX, 90 + statusBarPad, myData.fontBold, 18 )
-	locationLabel:setFillColor( unpack( theme.textColor ) )
+	locationLabel = display.newText("Enter location", display.contentCenterX, 90 + statusBarPad, myData.fontBold, 18 )
 	sceneGroup:insert( locationLabel)
 
 	-- compute the height of the tableView
@@ -470,6 +469,7 @@ function scene:show( event )
 		UI.navBar:setLabel( "Locations" )
 		-- set the theme
 		sceneBackground:setFillColor( unpack( theme.backgroundColor ) )
+		locationLabel:setFillColor( unpack( theme.textColor ) )
 	else
 		local statusBarPad = display.topStatusBarContentHeight
 
