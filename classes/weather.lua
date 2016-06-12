@@ -37,7 +37,7 @@ end
 
 -- This function is called if we need to actually query the server.     
 local function processWeatherRequest( event )
-    print( json.prettify( event ) )
+    -- print( json.prettify( event ) )
 	myData.currentWeatherData = json.decode(event.response)
     myData.lastRefresh = os.time()
     if M.callBack then

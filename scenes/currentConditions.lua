@@ -50,6 +50,7 @@ local windSpeedLabel
 local windSpeedText
 local hourlyScrollView
 local tabletPadding
+local weatherIcon
 
 local forecastTableView
 local forecastScrollView
@@ -97,6 +98,7 @@ local function displayCurrentConditions( )
     -- Get a local reference to the recent weather data
     local response = myData.currentWeatherData
 
+    print( json.prettify( response ) )
     -- show an alert if the weather isn't available
     if not response then
         native.showAlert("Oops!", "Forcast information currently not avaialble!", { "Okay" } )
@@ -253,7 +255,13 @@ local function displayCurrentConditions( )
 
     -- The weather icon. Create a file name from the string from the API.
     local icon = currently.icon
-    local weatherIcon = display.newImageRect( "images/" .. currently.icon .. ".png", 128, 128 )
+    if weatherIcon and weatherIcon.removeSelf then
+        print( "removing icon image" )
+        display.remove( weatherIcon )
+        weatherIcon = nil
+    end
+    print( "weather icon:", currently.icon)
+    weatherIcon = display.newImageRect( "images/" .. currently.icon .. ".png", 128, 128 )
     weatherIcon.x = 80  
     weatherIcon.y = 70
     weatherContainer:insert( weatherIcon )
@@ -261,9 +269,9 @@ local function displayCurrentConditions( )
     --
     -- We can't postiion this text until we have the Icon loaded. We don't create the icon until we're displaying the weather.
     --
-    weatherText.text = hourly.data[1].summary
+    weatherText.text = currently.summary
     weatherText.x = weatherIcon.x
-    weatherText.y = weatherIcon.y + 70
+    weatherText.y = weatherIcon.y + 74
     weatherText.anchorX = 0.5
 
     -- 

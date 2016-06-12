@@ -45,6 +45,17 @@ settings =
         },
         --]]
     },
+    window = {
+        defaultViewWidth = 960,
+        defaultViewHeight = 640,
+        resizable = true,
+        minViewHeight = 480,
+        minViewHeight = 320,
+
+        titleText = {
+            default = "Corona Weather",
+        },
+    },
     iphone =
     {
         plist =

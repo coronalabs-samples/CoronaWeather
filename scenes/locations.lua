@@ -55,14 +55,14 @@ local wasSwiped 				-- Flag to help separate touch events
 -- happen.
 function scene.hideTextField()
 	print("hiding text field")
-	locationEntryField.alpha = 0
+	locationEntryField.isVisible = false
 	locationEntryField.x = locationEntryField.x + 200
 end
 
 -- function to show the text field.
 function scene.showTextField()
 	print("showing text field")
-	locationEntryField.alpha = 1
+	locationEntryField.isVisible = true
 	locationEntryField.x = locationEntryField.x - 200
 
 end
