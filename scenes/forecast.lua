@@ -114,6 +114,7 @@ local function displayForecast()
 
 	if not response then
 		native.showAlert("Oops!", "Forcast information currently not avaialble!", { "Okay" } )
+		return false
 	end
 	local daily = response.daily
 	local forecast = {}
