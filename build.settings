@@ -1,193 +1,170 @@
 settings =
 {
-    orientation =
-    {
-        default = "portrait",
-        supported = { "portrait" }
-        --default = "landscapeRight",
-        --supported = { "landscapeRight", "landscapeLeft" }
-    },
-    android =
-    {
-        usesPermissions =
-        {
-            "android.permission.INTERNET",
-            "android.permission.ACCESS_NETWORK_STATE",
-            "android.permission.WRITE_EXTERNAL_STORAGE",
-            "com.android.vending.BILLING",
-            "com.android.vending.CHECK_LICENSE",
-            "android.permission.ACCESS_FINE_LOCATION",
-            "android.permission.ACCESS_COARSE_LOCATION",
-        },
-        --googlePlayGamesAppId = "xxxxxxxxxxxx",
-        --largeHeap = true
-    },
-    plugins =
-    {
-    --[[
-        -- key is the name passed to Lua's 'require()'
-        ["plugin.google.iap.v3"] =
-        {
-            -- required
-            publisherId = "com.coronalabs",
-            supportedPlatforms = { android = true },
-        },
-        -- key is the name passed to Lua's 'require()'
-        ["CoronaProvider.native.popup.social"] =
-        {
-            -- required
-            publisherId = "com.coronalabs",
-        },
-        ["plugin.google.play.services"] =
-        {
-                publisherId = "com.coronalabs",
-                supportedPlatforms = { android=true }
-        },
-        --]]
-    },
-    window = {
-        defaultViewWidth = 960,
-        defaultViewHeight = 640,
-        resizable = true,
-        minViewHeight = 480,
-        minViewHeight = 320,
+	orientation =
+	{
+		default = "portrait",
+		supported = { "portrait" }
+		--default = "landscapeRight",
+		--supported = { "landscapeRight", "landscapeLeft" }
+	},
+	android =
+	{
+		usesPermissions =
+		{
+			"android.permission.INTERNET",
+			"android.permission.ACCESS_NETWORK_STATE",
+			"android.permission.WRITE_EXTERNAL_STORAGE",
+			"com.android.vending.BILLING",
+			"com.android.vending.CHECK_LICENSE",
+			"android.permission.ACCESS_FINE_LOCATION",
+			"android.permission.ACCESS_COARSE_LOCATION",
+		},
+		--googlePlayGamesAppId = "xxxxxxxxxxxx",
+		--largeHeap = true
+	},
+	window = {
+		defaultViewWidth = 960,
+		defaultViewHeight = 640,
+		resizable = true,
+		minViewHeight = 480,
+		minViewHeight = 320,
 
-        titleText = {
-            default = "Corona Weather",
-        },
-    },
-    iphone =
-    {
-        plist =
-        {
-            CFBundleIconFiles =
-            {
-                "Icon-60.png",
-                "Icon-60@2x.png",
-                "Icon-60@3x.png",
-                "Icon-76.png",
-                "Icon-76@2x.png", 
-                "Icon-Small@3x.png",
-                "Icon-Small-40.png",
-                "Icon-Small-40@2x.png",
-                "Icon-Small-40@3x.png",
-            },
-            UILaunchImages = {
-                {  --iPhone 4 Portait
-                    ["UILaunchImageMinimumOSVersion"] = "7.0",
-                    ["UILaunchImageName"] = "Default",
-                    ["UILaunchImageOrientation"] = "Portrait",
-                    ["UILaunchImageSize"] = "{320, 480}"
-                },
-                {  --iPhone 4 LandscapeLeft
-                    ["UILaunchImageMinimumOSVersion"] = "7.0",
-                    ["UILaunchImageName"] = "Default",
-                    ["UILaunchImageOrientation"] = "LandscapeLeft",
-                    ["UILaunchImageSize"] = "{320, 480}"
-                },
-                {  --iPhone 4 LandscapeRight
-                    ["UILaunchImageMinimumOSVersion"] = "7.0",
-                    ["UILaunchImageName"] = "Default",
-                    ["UILaunchImageOrientation"] = "LandscapeRight",
-                    ["UILaunchImageSize"] = "{320, 480}"
-                },
-                {  --iPhone 5 Portait
-                    ["UILaunchImageMinimumOSVersion"] = "7.0",
-                    ["UILaunchImageName"] = "Default-568h",
-                    ["UILaunchImageOrientation"] = "Portrait",
-                    ["UILaunchImageSize"] = "{320, 568}"
-                },
-                {  --iPhone 5 LandscapeLeft
-                    ["UILaunchImageMinimumOSVersion"] = "7.0",
-                    ["UILaunchImageName"] = "Default-568h",
-                    ["UILaunchImageOrientation"] = "LandscapeLeft",
-                    ["UILaunchImageSize"] = "{320, 568}"
-                },
-                {  --iPhone 5  LandscapeRight
-                    ["UILaunchImageMinimumOSVersion"] = "7.0",
-                    ["UILaunchImageName"] = "Default-568h",
-                    ["UILaunchImageOrientation"] = "LandscapeRight",
-                    ["UILaunchImageSize"] = "{320, 568}"
-                },
-                { -- iPad / iPad Retina
-                    ["UILaunchImageMinimumOSVersion"] = "7.0",
-                    ["UILaunchImageName"] = "Default-Portrait",
-                    ["UILaunchImageOrientation"] = "Portrait",
-                    ["UILaunchImageSize"] = "{768, 1024}" 
-                }, 
-                { -- iPad / iPad Retina
-                    ["UILaunchImageMinimumOSVersion"] = "7.0",
-                    ["UILaunchImageName"] = "Default-Landscape",
-                    ["UILaunchImageOrientation"] = "LandscapeLeft",
-                    ["UILaunchImageSize"] = "{768, 1024}" 
-                },
-                { -- iPad / iPad Retina
-                    ["UILaunchImageMinimumOSVersion"] = "7.0",
-                    ["UILaunchImageName"] = "Default-Landscape",
-                    ["UILaunchImageOrientation"] = "LandscapeRight",
-                    ["UILaunchImageSize"] = "{768, 1024}" 
-                }, 
-                {  --iPhone 6 Portrait
-                    ["UILaunchImageMinimumOSVersion"] = "8.0",
-                    ["UILaunchImageName"] = "Default-667h",
-                    ["UILaunchImageOrientation"] = "Portrait",
-                    ["UILaunchImageSize"] = "{375, 667}"
-                },
-                {  --iPhone 6 LandscapeLeft
-                    ["UILaunchImageMinimumOSVersion"] = "8.0",
-                    ["UILaunchImageName"] = "Default-667h",
-                    ["UILaunchImageOrientation"] = "LandscapeLeft",
-                    ["UILaunchImageSize"] = "{375, 667}"
-                },
-                {  --iPhone 6 LandscapeRight
-                    ["UILaunchImageMinimumOSVersion"] = "8.0",
-                    ["UILaunchImageName"] = "Default-667h",
-                    ["UILaunchImageOrientation"] = "LandscapeRight",
-                    ["UILaunchImageSize"] = "{375, 667}"
-                },
-                { -- iPhone 6 Plus Portrait
-                    ["UILaunchImageMinimumOSVersion"] = "8.0",
-                    ["UILaunchImageName"] = "Default-736h",
-                    ["UILaunchImageOrientation"] = "Portrait",
-                    ["UILaunchImageSize"] = "{414, 736}"
-                },
-                { -- iPhone 6 Plus landscape left
-                    ["UILaunchImageMinimumOSVersion"] = "8.0",
-                    ["UILaunchImageName"] = "Default-Landscape-736h",
-                    ["UILaunchImageOrientation"] = "LandscapeLeft",
-                    ["UILaunchImageSize"] = "{414, 736}"
-                },
-                { -- iPhone 6 Plus landscape right
-                    ["UILaunchImageMinimumOSVersion"] = "8.0",
-                    ["UILaunchImageName"] = "Default-Landscape-736h",
-                    ["UILaunchImageOrientation"] = "LandscapeRight",
-                    ["UILaunchImageSize"] = "{414, 736}"
-                }
-            },
-            UIRequiredDeviceCapabilities = {"location-services", "gps" },
-            NSLocationWhenInUseUsageDescription = "This app uses the GPS when active to determine where to report weather for.",
-            UIApplicationExitsOnSuspend = false,    -- must be false for single sign-on to work
-            NSAppTransportSecurity =
-            {
-                NSExceptionDomains =
-                {
-                    ["geonames.org"] =
-                    {
-                        NSIncludesSubdomains = true,
-                        NSThirdPartyExceptionAllowsInsecureHTTPLoads = true
-                    },
-                    ["openweathermap.org"] =
-                    {
-                        NSIncludesSubdomains = true,
-                        NSThirdPartyExceptionAllowsInsecureHTTPLoads = true
-                    },
-                    ["virtualearth.net"] =
-                    {
-                        NSIncludesSubdomains = true,
-                        NSThirdPartyExceptionAllowsInsecureHTTPLoads = true
-                    },
-                },
-            },
-        }
-    },
+		titleText = {
+			default = "Corona Weather",
+		},
+	},
+	iphone =
+	{
+		plist =
+		{
+			CFBundleIconFiles =
+			{
+				"Icon-60.png",
+				"Icon-60@2x.png",
+				"Icon-60@3x.png",
+				"Icon-76.png",
+				"Icon-76@2x.png", 
+				"Icon-Small@3x.png",
+				"Icon-Small-40.png",
+				"Icon-Small-40@2x.png",
+				"Icon-Small-40@3x.png",
+			},
+			UILaunchImages = {
+				{  --iPhone 4 Portait
+					["UILaunchImageMinimumOSVersion"] = "7.0",
+					["UILaunchImageName"] = "Default",
+					["UILaunchImageOrientation"] = "Portrait",
+					["UILaunchImageSize"] = "{320, 480}"
+				},
+				{  --iPhone 4 LandscapeLeft
+					["UILaunchImageMinimumOSVersion"] = "7.0",
+					["UILaunchImageName"] = "Default",
+					["UILaunchImageOrientation"] = "LandscapeLeft",
+					["UILaunchImageSize"] = "{320, 480}"
+				},
+				{  --iPhone 4 LandscapeRight
+					["UILaunchImageMinimumOSVersion"] = "7.0",
+					["UILaunchImageName"] = "Default",
+					["UILaunchImageOrientation"] = "LandscapeRight",
+					["UILaunchImageSize"] = "{320, 480}"
+				},
+				{  --iPhone 5 Portait
+					["UILaunchImageMinimumOSVersion"] = "7.0",
+					["UILaunchImageName"] = "Default-568h",
+					["UILaunchImageOrientation"] = "Portrait",
+					["UILaunchImageSize"] = "{320, 568}"
+				},
+				{  --iPhone 5 LandscapeLeft
+					["UILaunchImageMinimumOSVersion"] = "7.0",
+					["UILaunchImageName"] = "Default-568h",
+					["UILaunchImageOrientation"] = "LandscapeLeft",
+					["UILaunchImageSize"] = "{320, 568}"
+				},
+				{  --iPhone 5  LandscapeRight
+					["UILaunchImageMinimumOSVersion"] = "7.0",
+					["UILaunchImageName"] = "Default-568h",
+					["UILaunchImageOrientation"] = "LandscapeRight",
+					["UILaunchImageSize"] = "{320, 568}"
+				},
+				{ -- iPad / iPad Retina
+					["UILaunchImageMinimumOSVersion"] = "7.0",
+					["UILaunchImageName"] = "Default-Portrait",
+					["UILaunchImageOrientation"] = "Portrait",
+					["UILaunchImageSize"] = "{768, 1024}" 
+				}, 
+				{ -- iPad / iPad Retina
+					["UILaunchImageMinimumOSVersion"] = "7.0",
+					["UILaunchImageName"] = "Default-Landscape",
+					["UILaunchImageOrientation"] = "LandscapeLeft",
+					["UILaunchImageSize"] = "{768, 1024}" 
+				},
+				{ -- iPad / iPad Retina
+					["UILaunchImageMinimumOSVersion"] = "7.0",
+					["UILaunchImageName"] = "Default-Landscape",
+					["UILaunchImageOrientation"] = "LandscapeRight",
+					["UILaunchImageSize"] = "{768, 1024}" 
+				}, 
+				{  --iPhone 6 Portrait
+					["UILaunchImageMinimumOSVersion"] = "8.0",
+					["UILaunchImageName"] = "Default-667h",
+					["UILaunchImageOrientation"] = "Portrait",
+					["UILaunchImageSize"] = "{375, 667}"
+				},
+				{  --iPhone 6 LandscapeLeft
+					["UILaunchImageMinimumOSVersion"] = "8.0",
+					["UILaunchImageName"] = "Default-667h",
+					["UILaunchImageOrientation"] = "LandscapeLeft",
+					["UILaunchImageSize"] = "{375, 667}"
+				},
+				{  --iPhone 6 LandscapeRight
+					["UILaunchImageMinimumOSVersion"] = "8.0",
+					["UILaunchImageName"] = "Default-667h",
+					["UILaunchImageOrientation"] = "LandscapeRight",
+					["UILaunchImageSize"] = "{375, 667}"
+				},
+				{ -- iPhone 6 Plus Portrait
+					["UILaunchImageMinimumOSVersion"] = "8.0",
+					["UILaunchImageName"] = "Default-736h",
+					["UILaunchImageOrientation"] = "Portrait",
+					["UILaunchImageSize"] = "{414, 736}"
+				},
+				{ -- iPhone 6 Plus landscape left
+					["UILaunchImageMinimumOSVersion"] = "8.0",
+					["UILaunchImageName"] = "Default-Landscape-736h",
+					["UILaunchImageOrientation"] = "LandscapeLeft",
+					["UILaunchImageSize"] = "{414, 736}"
+				},
+				{ -- iPhone 6 Plus landscape right
+					["UILaunchImageMinimumOSVersion"] = "8.0",
+					["UILaunchImageName"] = "Default-Landscape-736h",
+					["UILaunchImageOrientation"] = "LandscapeRight",
+					["UILaunchImageSize"] = "{414, 736}"
+				}
+			},
+			UIRequiredDeviceCapabilities = {"location-services", "gps" },
+			NSLocationWhenInUseUsageDescription = "This app uses the GPS when active to determine where to report weather for.",
+			UIApplicationExitsOnSuspend = false,    -- must be false for single sign-on to work
+			NSAppTransportSecurity =
+			{
+				NSExceptionDomains =
+				{
+					["geonames.org"] =
+					{
+						NSIncludesSubdomains = true,
+						NSThirdPartyExceptionAllowsInsecureHTTPLoads = true
+					},
+					["openweathermap.org"] =
+					{
+						NSIncludesSubdomains = true,
+						NSThirdPartyExceptionAllowsInsecureHTTPLoads = true
+					},
+					["virtualearth.net"] =
+					{
+						NSIncludesSubdomains = true,
+						NSThirdPartyExceptionAllowsInsecureHTTPLoads = true
+					},
+				},
+			},
+		}
+	},
 }

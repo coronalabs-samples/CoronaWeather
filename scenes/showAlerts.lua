@@ -1,3 +1,10 @@
+--
+-- Corona Weather - A business style sample app
+--
+-- MIT Licensed
+--
+-- showAlerts.lua -- Used to display severe weather alerts when detected in the currentConditions module.
+--
 local composer = require( "composer" )
 local scene = composer.newScene()
 

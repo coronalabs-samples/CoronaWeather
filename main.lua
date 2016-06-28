@@ -41,28 +41,45 @@ local UI = require( "classes.ui" )
 --
 -- Store our API keys for scenes that need them
 --
+-- Go to https://developer.forecast.io to get your own key.
 myData.forecastIOkey = "5e07c45fcc74c5997d832a4ee792031e"
+--myData.forecastIOkey = ""
 -- Keep the weather API from updating too often, initialize to 0
 myData.lastRefresh = 0 -- force a download the first time.
 -- Once we detect our device/platform record it here when device decisions need to be made
 myData.platform = "iOS"
 
+local function apiKeyOnComplete( event )
+	if ( event.action == "clicked" ) then
+		local i = event.index
+		if ( i == 1 ) then
+			-- Do nothing; dialog will simply dismiss
+		elseif ( i == 2 ) then
+			-- Open URL if "Learn More" (second button) was clicked
+			system.openURL( "https://developer.forecast.io" )
+		end
+	end
+end
+
+if myData.forecastIOkey:len() == 0 then
+	native.showAlert( "API Key needed", "Please visit https://developer.forecast.io and get your own API key.", { "Okay", "Learn more" }, apiKeyOnComplete )
+end
 --
 -- Detect the device we are on
 -- This is important because we are going to present a different UI based on the device. 
 -- iOS devices will have a tabBar controller at the bottom. Android will have a hamburger that will slide in
 -- a menu for instance.
 if "simulator" == system.getInfo("environment") and "iP" ~= string.sub( system.getInfo("model"), 1, 2 ) then
-    myData.platform = "Android"
+	myData.platform = "Android"
 elseif "device" == system.getInfo("environment") and "Android" == system.getInfo("platformName" ) then
-    myData.platform = "Android"
+	myData.platform = "Android"
 end
 --Runtime:setCheckGlobals( true )
 display.setStatusBar( display.DefaultStatusBar )
 
 if "Android" == myData.platform then
-    -- Select the right widget theme for Android
-    widget.setTheme( "widget_theme_android_holo_dark" )
+	-- Select the right widget theme for Android
+	widget.setTheme( "widget_theme_android_holo_dark" )
 end
 --
 -- Load saved in settings
@@ -77,18 +94,18 @@ myData.settings = utility.loadTable("settings.json")
 -- But we will keep it simple for now.
 if myData.settings == nil then
 	myData.settings = {}
-    myData.settings.firstTime = true
-    myData.settings.theme = "light"
-    if "Android" == myData.platform then
-        myData.settings.theme = "dark"
-    end
-    myData.settings.tempUnits = "fahrenheit" -- fahrenheit or celsius
-    myData.settings.distanceUnits = "miles" -- miles or kilometers
-    myData.settings.locations = {   { name = "Current Location", latitude = 0, longitude = 0, selected = true, noDelete = true },
-                                    { name = "Cary, NC", latitude = 35.7789, longitude = -78.8003, postalCode = "27519", selected = false },
-                                    { name = "Palo Alto, CA", latitude = 37.4419, longitude = -122.1430, postalCode = "94303", selected = false },
-                                    { name = "Austin, TX", latitude = 30.2672, longitude = -97.7431, postalCode = "78701", selected = false }
-                                }
+	myData.settings.firstTime = true
+	myData.settings.theme = "light"
+	if "Android" == myData.platform then
+		myData.settings.theme = "dark"
+	end
+	myData.settings.tempUnits = "fahrenheit" -- fahrenheit or celsius
+	myData.settings.distanceUnits = "miles" -- miles or kilometers
+	myData.settings.locations = {   { name = "Current Location", latitude = 0, longitude = 0, selected = true, noDelete = true },
+									{ name = "Cary, NC", latitude = 35.7789, longitude = -78.8003, postalCode = "27519", selected = false },
+									{ name = "Palo Alto, CA", latitude = 37.4419, longitude = -122.1430, postalCode = "94303", selected = false },
+									{ name = "Austin, TX", latitude = 30.2672, longitude = -97.7431, postalCode = "78701", selected = false }
+								}
 	utility.saveTable(myData.settings, "settings.json")
 end
 
@@ -96,26 +113,26 @@ end
 theme.setTheme( myData.settings.theme )
 -- Setup a reasonable default GPS location. The forecastIO API uses lat, long
 if #myData.settings.locations > 0 then
-    myData.currentLocation = nil
-    for i = 1, #myData.settings.locations do
-        if myData.settings.locations[i].selected then
-            myData.currentLocation = myData.settings.locations[i].name
-            myData.latitude = myData.settings.locations[i].latitude
-            myData.longitude = myData.settings.locations[i].longitude
-        end
-    end
-    -- if we get here and myData.currentLocation is still nil, there wasn't a selected entry in the list
-    -- The first items should be "Current Location", so grab that default data
-    if myData.currentLocation == nil then
-        myData.currentLocation = myData.settings.locations[1].name
-        myData.latitude = myData.settings.locations[1].latitude
-        myData.longitude = myData.settings.locations[1].longitude
-    end
+	myData.currentLocation = nil
+	for i = 1, #myData.settings.locations do
+		if myData.settings.locations[i].selected then
+			myData.currentLocation = myData.settings.locations[i].name
+			myData.latitude = myData.settings.locations[i].latitude
+			myData.longitude = myData.settings.locations[i].longitude
+		end
+	end
+	-- if we get here and myData.currentLocation is still nil, there wasn't a selected entry in the list
+	-- The first items should be "Current Location", so grab that default data
+	if myData.currentLocation == nil then
+		myData.currentLocation = myData.settings.locations[1].name
+		myData.latitude = myData.settings.locations[1].latitude
+		myData.longitude = myData.settings.locations[1].longitude
+	end
 else
-    -- No data at all? Gotta start somewhere. PA seems like a nice place.
-    myData.currentLocation = "Palo Alto, CA"
-    myData.latitude = 37.4419
-    myData.longitude = -122.1430
+	-- No data at all? Gotta start somewhere. PA seems like a nice place.
+	myData.currentLocation = "Palo Alto, CA"
+	myData.latitude = 37.4419
+	myData.longitude = -122.1430
 end
 --
 -- Set up the navBar controller's hamburger icon
@@ -124,21 +141,21 @@ end
 --
 UI.createNavBar()
 if myData.platform == "iOS" then
-    UI.createTabBar()
+	UI.createTabBar()
 end
 
 --
 -- Enable location services to populate a default location
 --
 local locationServicesHandler = function( event )
-    -- Check for error (user may have turned off location services)
-    if ( event.errorCode ) then
-        --native.showAlert( "GPS Location Error", event.errorMessage, {"OK"} )
-        print( "Location error: " .. tostring( event.errorMessage ) )
-    else
-        myData.settings.locations[1].latitude = event.latitude
-        myData.settings.locations[1].longitude = event.longitude
-    end
+	-- Check for error (user may have turned off location services)
+	if ( event.errorCode ) then
+		--native.showAlert( "GPS Location Error", event.errorMessage, {"OK"} )
+		print( "Location error: " .. tostring( event.errorMessage ) )
+	else
+		myData.settings.locations[1].latitude = event.latitude
+		myData.settings.locations[1].longitude = event.longitude
+	end
 end
 
 Runtime:addEventListener( "location", locationServicesHandler )
@@ -149,22 +166,22 @@ Runtime:addEventListener( "location", locationServicesHandler )
 -- There really are not any scenes to go back to, 
 local function onKeyEvent( event )
 
-    local phase = event.phase
-    local keyName = event.keyName
-    print( event.phase, event.keyName )
+	local phase = event.phase
+	local keyName = event.keyName
+	print( event.phase, event.keyName )
 
-    if ( "back" == keyName and "up" == phase ) then
-        local currentScene = composer.getSceneName( "overlay" )
-        if currentScene then
-            composer.hideOverlay( "slideRight", 250 )
-        else
-            native.requestExit()
-        end
-        -- we handled the key event, return true
-        return true
-    end
-    -- we did not handle the key event, let the system know it has to deal with it
-    return false
+	if ( "back" == keyName and "up" == phase ) then
+		local currentScene = composer.getSceneName( "overlay" )
+		if currentScene then
+			composer.hideOverlay( "slideRight", 250 )
+		else
+			native.requestExit()
+		end
+		-- we handled the key event, return true
+		return true
+	end
+	-- we did not handle the key event, let the system know it has to deal with it
+	return false
 end
 
 -- add the key callback
@@ -172,7 +189,7 @@ end
 -- we can add keyboard short cuts for Windows and OS X and controller support for Apple
 -- and Android TV
 if "Android" == myData.platform then
-    Runtime:addEventListener( "key", onKeyEvent )
+	Runtime:addEventListener( "key", onKeyEvent )
 end
 
 --
@@ -185,22 +202,22 @@ end
 -- On start up or resume, just to the current Conditions page.
 --
 local function systemEvents(event)
-    print("systemEvent " .. event.type)
-    if event.type == "applicationSuspend" then
-        utility.saveTable( myData.settings, "settings.json" )
-    elseif event.type == "applicationResume" then
-        UI.showWeather()
-    elseif event.type == "applicationExit" then
-        utility.saveTable( myData.settings, "settings.json" )
-    elseif event.type == "applicationStart" then
-        if myData.settings.firstTime then
-            myData.settings.firstTime = false
-            utility.saveTable(myData.settings, "settings.json")
-            UI.showLocations()
-        else
-            UI.showWeather()
-        end
-    end
-    return true
+	print("systemEvent " .. event.type)
+	if event.type == "applicationSuspend" then
+		utility.saveTable( myData.settings, "settings.json" )
+	elseif event.type == "applicationResume" then
+		UI.showWeather()
+	elseif event.type == "applicationExit" then
+		utility.saveTable( myData.settings, "settings.json" )
+	elseif event.type == "applicationStart" then
+		if myData.settings.firstTime then
+			myData.settings.firstTime = false
+			utility.saveTable(myData.settings, "settings.json")
+			UI.showLocations()
+		else
+			UI.showWeather()
+		end
+	end
+	return true
 end
 Runtime:addEventListener("system", systemEvents)

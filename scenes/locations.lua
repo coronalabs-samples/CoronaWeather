@@ -3,7 +3,7 @@
 --
 -- MIT Licensed
 --
--- locations.lua -- scene to let the user select a location to get weather for
+-- locations.lua -- scene to let the user select a location to get weather for.
 -- 
 -- Locations will be saved in the user's settings table. One of the items will be the currently 
 -- selected location. One other will be called "Current Location" and will be an undeletable 
