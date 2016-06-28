@@ -42,8 +42,8 @@ local UI = require( "classes.ui" )
 -- Store our API keys for scenes that need them
 --
 -- Go to https://developer.forecast.io to get your own key.
-myData.forecastIOkey = "5e07c45fcc74c5997d832a4ee792031e"
---myData.forecastIOkey = ""
+
+myData.forecastIOkey = ""
 -- Keep the weather API from updating too often, initialize to 0
 myData.lastRefresh = 0 -- force a download the first time.
 -- Once we detect our device/platform record it here when device decisions need to be made
