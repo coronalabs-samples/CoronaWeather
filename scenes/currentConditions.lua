@@ -578,14 +578,14 @@ function scene:create( event )
 	moonText.anchorX = 0
 	almanacContainer:insert( moonText )
 
-	cloudCoverTextLabel = display.newText( "Cloud Cover", 80, moonTextLabel.y + 24, theme.font, 14 )
+	cloudCoverTextLabel = display.newText( "Cloud cover", 80, moonTextLabel.y + 24, theme.font, 14 )
 	cloudCoverTextLabel.anchorX = 1
 	almanacContainer:insert( cloudCoverTextLabel )
 	cloudCoverText = display.newText( "", 90, cloudCoverTextLabel.y, theme.fontBold, 14 )
 	cloudCoverText.anchorX = 0
 	almanacContainer:insert( cloudCoverText )
 
-	dewPointTextLabel = display.newText( "DewPoint", 80, cloudCoverTextLabel.y + 24, theme.font, 14 )
+	dewPointTextLabel = display.newText( "Dew point", 80, cloudCoverTextLabel.y + 24, theme.font, 14 )
 	dewPointTextLabel.anchorX = 1
 	almanacContainer:insert( dewPointTextLabel )
 	dewPointText = display.newText( "", 90, dewPointTextLabel.y, theme.fontBold, 14 )
