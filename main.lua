@@ -42,6 +42,7 @@ local UI = require( "classes.ui" )
 -- Store our API keys for scenes that need them
 --
 -- Go to https://developer.forecast.io to get your own key.
+
 myData.forecastIOkey = ""
 -- Keep the weather API from updating too often, initialize to 0
 myData.lastRefresh = 0 -- force a download the first time.
@@ -220,7 +221,13 @@ local function systemEvents(event)
 	return true
 end
 if myData.forecastIOkey:len() == 0 then -- not setup, don't start up the app.
-	local warning = display.newText("Please create an API key to run this app", display.contentCenterX, display.contentCenterY, display.contentWidth - 40, 100, native.systemFontBold, 40 )
+	local warning = display.newText("Please create an API key to run this app", display.contentCenterX, display.contentCenterY, display.contentWidth - 40, 0, native.systemFontBold, 40 )
+	if UI.tabBar then
+		UI.tabBar.isVisible = false
+	end
+	if UI.navBar then
+		UI.navBar.isVisible = false
+	end
 else
 	Runtime:addEventListener("system", systemEvents)
 end

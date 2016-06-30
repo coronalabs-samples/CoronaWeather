@@ -370,8 +370,8 @@ local function onLocationRowRender( event )
     rowTitle:setFillColor( unpack( theme.textColor ) )
     rowTitle.anchorX = 0
     if params.selected then
-		local checkMark = display.newImageRect( row, "images/checkmark.png", 40, 40 )
-		checkMark.x = rowWidth - 40
+		local checkMark = display.newImageRect( row, "images/checkmark.png", 30, 30 )
+		checkMark.x = rowWidth - 30
 		checkMark.y = rowTitle.y
     end
     -- a row can be marked as undeletable (i.e. Current Location). If we are not that row, then
