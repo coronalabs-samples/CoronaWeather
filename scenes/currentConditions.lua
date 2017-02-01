@@ -83,7 +83,7 @@ end
 -- touch handler for the severe weather alerts bar
 local function displayAlerts( event )
 	if "ended" == event.phase then
-		closeAlerts( event ) -- we can just use this event table to get an ended phase to closeAlerts
+		--closeAlerts( event ) -- we can just use this event table to get an ended phase to closeAlerts
 		composer.showOverlay( "scenes.showAlerts", { effect = "crossFade", time = 250 })
 	end
 	return true
@@ -132,10 +132,10 @@ local function displayCurrentConditions( )
 		severeWeatherButton.strokeWidth = 1
 		severeWeatherButton:setStrokeColor( 1, 0.5, 0.5 )
 		severeWeatherButtonGroup:insert( severeWeatherButton )
-		local severeWeatherText = display.newText( "Severe Weather", display.contentCenterX, 10 + display.topStatusBarContentHeight, theme.font, 14 )
+		local severeWeatherText = display.newText( "Severe Weather", display.contentCenterX, 10 + display.topStatusBarContentHeight, theme.fontBold, 14 )
 		severeWeatherText:setFillColor( 1 )
 		severeWeatherButtonGroup:insert( severeWeatherText )
-		local closeSevereWeatherButton = display.newText( "×", display.actualContentWidth - 15, 10 + display.topStatusBarContentHeight, theme.font, 14 )
+		local closeSevereWeatherButton = display.newText( "×", display.actualContentWidth - 15, 10 + display.topStatusBarContentHeight, theme.fontBold, 36 )
 		closeSevereWeatherButton:setFillColor( 1 )
 		severeWeatherButtonGroup:insert( closeSevereWeatherButton )
 		severeWeatherButtonGroup:addEventListener( "touch", displayAlerts )
@@ -445,7 +445,7 @@ function scene:create( event )
 	sceneGroup:insert( sceneBackground )
 
 	-- A scrollView will hold all the actual display bits
-	local scrollViewHeight = display.actualContentHeight - 100
+	local scrollViewHeight = display.actualContentHeight - 100 -- display.topStatusBarContentHeight
 	-- Create the widget
 	forecastScrollView = widget.newScrollView
 	{

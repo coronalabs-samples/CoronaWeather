@@ -35,13 +35,13 @@ local function onRowRender( event )
         row:insert( title )
         local closeButtonBG = display.newCircle( rowWidth - 10, 12, 10 )
         row:insert( closeButtonBG )
-        closeButtonBG:setFillColor( 1, 1, 1, 0.25 )
+        closeButtonBG:setFillColor( 1, 0,0 , 0.5 )
         local closeButtonX = display.newText( "×", closeButtonBG.x + 1, closeButtonBG.y - 1.5, theme.font, 16 )
         closeButtonX:setFillColor( 1 )
         row:insert( closeButtonX )
         closeButtonX:addEventListener( "touch", dismissAlerts )
     else
-        local title = display.newText( params.title, rowWidth * 0.5, 10, theme.fontBold, 12 )
+        local title = display.newText( params.title, rowWidth * 0.5, 10, native.systemFontBold, 12 )
         row:insert( title )
         title:setFillColor( 1 )
         local descr = display.newText({
@@ -50,8 +50,8 @@ local function onRowRender( event )
             x = rowWidth * 0.5,
             y = 25,
             width = rowWidth - 20,     --required for multi-line and alignment
-            font = theme.font,   
-            fontSize = 10,
+            font = native.systemFont,   
+            fontSize = 11,
             align = "left"  --new alignment parameter
         })
         descr.anchorY = 0
@@ -94,16 +94,16 @@ function scene:create( event )
     sceneBackground:setFillColor( 0, 0, 0, 0.25 )
     sceneBackground:addEventListener( "touch", dismissAlerts )
 
-    local alertBackground = display.newRoundedRect( sceneGroup, display.contentCenterX, display.contentCenterY, display.actualContentWidth - 40, display.actualContentHeight - 210, 12 )
-    alertBackground:setFillColor( 0.25, 0, 0)
-    alertBackground:setStrokeColor( 0.9, 0.8, 0.8 )
+    local alertBackground = display.newRoundedRect( sceneGroup, display.contentCenterX, display.contentCenterY + display.topStatusBarContentHeight * 0.5, display.actualContentWidth - 30, display.actualContentHeight - 150, 12 )
+    alertBackground:setFillColor( 0.10, 0, 0)
+    alertBackground:setStrokeColor( 0.9, 0.9, 0.9 )
     alertBackground.strokeWidth = 2
 
     local tableView = widget.newTableView({
         height = alertBackground.height - 40, 
         width = alertBackground.width - 40,
         onRowRender = onRowRender,
-        backgroundColor = { 0.25, 0, 0 },
+        backgroundColor = { 0.10, 0, 0 },
         hideBackground = true,
     })
     tableView.x = display.contentCenterX
@@ -112,8 +112,8 @@ function scene:create( event )
     tableView:insertRow({
         isCategory = false,
         rowHeight = 30,
-        rowColor = { default = { 0.25, 0, 0 } },
-        lineColor = { 0.75, 0.5, 0.5 },
+        rowColor = { default = { 0.10, 0, 0 } },
+        lineColor = { 1, 0.25, 0.25 },
         params = { label = "Alert!" }
     })
     for i = 1, #alerts do
@@ -130,8 +130,8 @@ function scene:create( event )
         tableView:insertRow({
             isCategory = true,
             rowHeight = rowHeight,
-            rowColor = { default = { 0.25, 0, 0 } },
-            lineColor = { 0.75, 0.5, 0.5 },
+            rowColor = { default = { 0.10, 0, 0 } },
+            lineColor = { 1.0, 0.25, 0.25 },
             params = { title = alerts[i].title, description = alerts[i].description, alertTime = alerts[i].time, expiresTime = alerts[i].expires }
         })
     end

@@ -490,6 +490,10 @@ function scene:hide( event )
 	local sceneGroup = self.view
 	
 	if event.phase == "will" then
+		if myData.settings.firstTime == true then
+			myData.settings.firstTime = false
+			utility.saveTable(myData.settings, "settings.json")
+		end
 		-- before we leave the screen, close the database, since it was opened in show()
 		myData.db:close()
 		myData.db = nil

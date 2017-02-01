@@ -206,13 +206,13 @@ local function systemEvents(event)
 	if event.type == "applicationSuspend" then
 		utility.saveTable( myData.settings, "settings.json" )
 	elseif event.type == "applicationResume" then
-		UI.showWeather()
+		if not myData.settings.firstTime then
+			UI.showWeather()
+		end
 	elseif event.type == "applicationExit" then
 		utility.saveTable( myData.settings, "settings.json" )
 	elseif event.type == "applicationStart" then
 		if myData.settings.firstTime then
-			myData.settings.firstTime = false
-			utility.saveTable(myData.settings, "settings.json")
 			UI.showLocations()
 		else
 			UI.showWeather()
